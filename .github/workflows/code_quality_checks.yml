@@ -1,0 +1,45 @@
+name: Code Quality Checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Set Up Python Tooling
+        uses: ./.github/workflows/setup
+
+      - name: Run Ruff Lint Checks
+        run: uv run ruff check --no-fix .
+
+      - name: Run Ruff Format Checks
+        run: uv run ruff format --check .
+
+  lint-markdown:
+    name: Lint Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+
+      - name: Install Markdownlint CLI
+        run: npm install --global markdownlint-cli
+
+      - name: Run Markdownlint
+        run: markdownlint --config markdownlint.json --ignore-path .markdownlintignore "**/*.md"

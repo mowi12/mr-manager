@@ -338,3 +338,6 @@ $RECYCLE.BIN/
 
 ### PyCharm/IntelliJ Copilot ###
 copilot.data.migration*.xml
+
+### PyCharm Inspection Profiles ###
+.idea/inspectionProfiles/profiles_settings.xml

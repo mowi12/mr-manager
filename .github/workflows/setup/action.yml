@@ -1,0 +1,16 @@
+name: Setup Python With UV
+description: Set Up UV, Python, And Sync Project Dev Dependencies
+runs:
+  using: composite
+  steps:
+    - name: Set Up UV
+      uses: astral-sh/setup-uv@v7
+
+    - name: Set Up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version-file: .python-version
+
+    - name: Install Dependencies
+      shell: bash
+      run: uv sync --dev

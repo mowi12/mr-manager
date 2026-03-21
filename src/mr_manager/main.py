@@ -1,5 +1,11 @@
+"""Application entrypoint for mr-manager."""
+
+from mr_manager.ui import MrManagerApp
+
+
 def main() -> None:
-    print("Hello from mr-manager!")
+    """Start the mr-manager Textual application."""
+    MrManagerApp().run()
 
 
 if __name__ == "__main__":

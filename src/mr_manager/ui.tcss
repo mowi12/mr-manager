@@ -1,0 +1,37 @@
+Screen {
+    layout: vertical;
+}
+
+#content {
+    height: 1fr;
+}
+
+#scan-status-row {
+    height: auto;
+    margin: 1 1 1 1;
+    align: left middle;
+}
+
+#scan-path {
+    width: 1fr;
+}
+
+#scan-state {
+    height: auto;
+    width: 1fr;
+    align: right middle;
+}
+
+#scan-state-indicator {
+    width: auto;
+    margin-right: 1;
+}
+
+#scan-state-result {
+    width: auto;
+}
+
+#repo-list {
+    height: 1fr;
+    margin: 0 1 1 1;
+}

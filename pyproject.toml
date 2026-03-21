@@ -1,0 +1,17 @@
+[project]
+name = "mr-manager"
+version = "0.1.0"
+description = "TUI-based CLI for managing repositories inside a *myrepos* config file. Simplifies adding and removing repos with an interactive interface."
+authors = [
+    { name = "Moritz Wieland", email = "moritz.wieland@googlemail.com" }
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+mr-manager = "mr_manager.main:main"
+
+[tool.uv]
+package = true

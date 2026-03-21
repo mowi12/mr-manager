@@ -1,0 +1,35 @@
+name: Question / support
+description: Ask for help using or configuring mr-manager
+title: "[Support]: "
+labels:
+  - question
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For usage questions, this template helps keep issues clear and actionable.
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to do?
+      placeholder: I want to ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried?
+      placeholder: I already tried ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: snippet
+    attributes:
+      label: Relevant config/code snippet
+      description: Paste relevant config, commands, or snippets.
+      render: shell
+    validations:
+      required: true

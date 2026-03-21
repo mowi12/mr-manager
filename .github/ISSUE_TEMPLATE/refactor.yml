@@ -1,0 +1,29 @@
+name: Refactor request
+description: Propose codebase cleanup or structural improvements
+title: "[Refactor]: "
+labels:
+  - refactor
+body:
+  - type: textarea
+    id: area
+    attributes:
+      label: What part of the code is affected?
+      placeholder: src/mr_manager/...
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Why is it problematic?
+      placeholder: Hard to maintain because ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed improvement
+      placeholder: Extract ... into ...
+    validations:
+      required: true

@@ -1,0 +1,46 @@
+name: Feature request
+description: Suggest an improvement to mr-manager
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Please describe the problem and proposal clearly.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      placeholder: It is hard to ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      placeholder: We could add ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      placeholder: I also considered ...
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Expected impact
+      description: Explain who benefits and how.
+      placeholder: This would help users who ...
+
+  - type: textarea
+    id: config-snippet
+    attributes:
+      label: Relevant config/code snippet
+      description: Optional snippet that illustrates the need.
+      render: shell

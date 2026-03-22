@@ -24,7 +24,6 @@ Screen {
 
 #scan-state-indicator {
     width: auto;
-    margin-right: 1;
 }
 
 #scan-state-result {

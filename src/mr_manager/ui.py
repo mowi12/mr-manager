@@ -33,10 +33,15 @@ class MrManagerApp(App[None]):
         self._discover_root = Path.home()
         self._config_path = Path.home() / ".mrconfig"
         self._discovered_repos: list[Path] = []
+        self._displayed_repos: list[Path] = []
         self._repo_sections_by_path: dict[Path, list[str]] = {}
         self._configured_repo_paths: set[Path] = set()
         self._selected_repo_paths: set[Path] = set()
         self._loading = True
+
+    def _discovered_repo_set(self) -> set[Path]:
+        """Return discovered repositories as a set for membership checks."""
+        return set(self._discovered_repos)
 
     def compose(self) -> ComposeResult:
         """Compose the app layout widgets."""
@@ -74,9 +79,14 @@ class MrManagerApp(App[None]):
             sections_by_path: Mapping of configured repositories to section names.
         """
         self._discovered_repos = discovered
+        discovered_set = set(discovered)
         self._repo_sections_by_path = sections_by_path
         self._configured_repo_paths = set(sections_by_path.keys())
-        self._selected_repo_paths = set(discovered).intersection(self._configured_repo_paths)
+        self._displayed_repos = sorted(
+            discovered_set.union(self._configured_repo_paths),
+            key=lambda repo: str(repo).lower(),
+        )
+        self._selected_repo_paths = set(self._configured_repo_paths)
         self._loading = False
         self.query_one("#scan-state-indicator", LoadingIndicator).display = False
         self.query_one("#scan-state-result", Label).display = True
@@ -87,10 +97,10 @@ class MrManagerApp(App[None]):
         """Render repository options into the selectable list widget."""
         repo_list = self.query_one("#repo-list", OptionList)
         repo_list.clear_options()
-        for repo in self._discovered_repos:
+        for repo in self._displayed_repos:
             repo_list.add_option(self._render_repo_prompt(repo))
-        repo_list.disabled = not self._discovered_repos
-        if self._discovered_repos:
+        repo_list.disabled = not self._displayed_repos
+        if self._displayed_repos:
             repo_list.highlighted = 0
             repo_list.focus()
 
@@ -103,19 +113,33 @@ class MrManagerApp(App[None]):
         Returns:
             Display string for the repository list row.
         """
-        bullet = "●" if repo in self._selected_repo_paths else "○"
+        if self._is_missing_or_unreachable(repo):
+            bullet = "◐" if repo in self._selected_repo_paths else "◌"
+        else:
+            bullet = "●" if repo in self._selected_repo_paths else "○"
         return f"{bullet} {repo}"
+
+    def _is_missing_or_unreachable(self, repo: Path) -> bool:
+        """Return whether a repo is configured but not found during discovery.
+
+        Args:
+            repo: Repository path to check.
+
+        Returns:
+            True when repo is configured but not present in discovered paths.
+        """
+        return repo in self._configured_repo_paths and repo not in self._discovered_repo_set()
 
     def _toggle_repo_by_index(self, index: int) -> None:
         """Toggle selected state for a repository at list index.
 
         Args:
-            index: Zero-based repository index in the discovered list.
+            index: Zero-based repository index in the displayed list.
         """
-        if index < 0 or index >= len(self._discovered_repos):
+        if index < 0 or index >= len(self._displayed_repos):
             return
 
-        repo = self._discovered_repos[index]
+        repo = self._displayed_repos[index]
         if repo in self._selected_repo_paths:
             self._selected_repo_paths.remove(repo)
         else:
@@ -131,18 +155,18 @@ class MrManagerApp(App[None]):
         """Update the top-right scan/result summary text."""
         status_line = self.query_one("#scan-state-result", Label)
 
-        if not self._discovered_repos:
+        if not self._displayed_repos:
             status_line.update(f"No Git repositories found under {self._discover_root}.")
             return
 
-        discovered_set = set(self._discovered_repos)
+        discovered_set = self._discovered_repo_set()
         add_count = len(self._selected_repo_paths - self._configured_repo_paths)
-        remove_count = len(
-            (self._configured_repo_paths.intersection(discovered_set)) - self._selected_repo_paths
-        )
+        remove_count = len(self._configured_repo_paths - self._selected_repo_paths)
+        missing_count = len(self._configured_repo_paths - discovered_set)
         status_line.update(
             "Discovered: "
-            f"{len(self._discovered_repos)} | To Add: {add_count} | To Remove: {remove_count}"
+            f"{len(self._discovered_repos)} | Missing: {missing_count} | "
+            f"To Add: {add_count} | To Remove: {remove_count}"
         )
 
     def action_cursor_down(self) -> None:
@@ -155,7 +179,7 @@ class MrManagerApp(App[None]):
 
     def action_toggle_selected(self) -> None:
         """Toggle currently highlighted repository selection."""
-        if self._loading or not self._discovered_repos:
+        if self._loading or not self._displayed_repos:
             return
         repo_list = self.query_one("#repo-list", OptionList)
         highlighted_index = repo_list.highlighted
@@ -165,13 +189,12 @@ class MrManagerApp(App[None]):
 
     def _save_changes(self) -> None:
         """Persist selected repository additions/removals to config file."""
-        discovered_set = set(self._discovered_repos)
         repos_to_add = sorted(
             self._selected_repo_paths - self._configured_repo_paths,
             key=lambda repo: str(repo).lower(),
         )
         repos_to_remove = sorted(
-            (self._configured_repo_paths.intersection(discovered_set)) - self._selected_repo_paths,
+            self._configured_repo_paths - self._selected_repo_paths,
             key=lambda repo: str(repo).lower(),
         )
         section_names_to_remove = {

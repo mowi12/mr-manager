@@ -65,9 +65,13 @@ class MrManagerApp(App[None]):
     @work(thread=True, exclusive=True)
     def load_repository_data(self) -> None:
         """Load discovered repositories and configured repo sections in a worker."""
-        discovered = discover_git_repositories(self._discover_root)
-        sections_by_path = parse_configured_repo_sections(self._config_path)
-        self.call_from_thread(self._set_repository_data, discovered, sections_by_path)
+        try:
+            discovered = discover_git_repositories(self._discover_root)
+            sections_by_path = parse_configured_repo_sections(self._config_path)
+        except (OSError, UnicodeDecodeError, RuntimeError, ValueError) as error:
+            self.call_from_thread(self._handle_repository_load_error, error)
+        else:
+            self.call_from_thread(self._set_repository_data, discovered, sections_by_path)
 
     def _set_repository_data(
         self, discovered: list[Path], sections_by_path: dict[Path, list[str]]
@@ -92,6 +96,20 @@ class MrManagerApp(App[None]):
         self.query_one("#scan-state-result", Label).display = True
         self._render_repository_list()
         self._update_scan_state_result()
+
+    def _handle_repository_load_error(self, error: Exception) -> None:
+        """Handle repository load failures from the worker thread.
+
+        Args:
+            error: Exception raised during discovery or config parsing.
+        """
+        self._loading = False
+        self.query_one("#scan-state-indicator", LoadingIndicator).display = False
+        error_label = self.query_one("#scan-state-result", Label)
+        error_label.display = True
+        error_label.update(f"Error Loading Repositories: {error}")
+        repo_list = self.query_one("#repo-list", OptionList)
+        repo_list.disabled = True
 
     def _render_repository_list(self) -> None:
         """Render repository options into the selectable list widget."""

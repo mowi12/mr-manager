@@ -19,6 +19,7 @@ package = true
 [dependency-groups]
 dev = [
     "ruff>=0.15.7",
+    "ty>=0.0.24",
 ]
 
 [tool.ruff]

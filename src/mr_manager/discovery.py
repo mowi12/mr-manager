@@ -52,7 +52,9 @@ def discover_git_repositories(root: Path) -> list[Path]:
     for current_root, dirs, _ in os.walk(root, topdown=True):
         if ".git" in dirs:
             discovered.append(Path(current_root).resolve())
-            dirs[:] = [directory for directory in dirs if directory != ".git"]
+            # Repo detected: skip descending into its working tree for speed.
+            dirs.clear()
+            continue
 
         dirs[:] = [directory for directory in dirs if _should_descend_directory(directory)]
 

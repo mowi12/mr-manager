@@ -26,6 +26,19 @@ jobs:
       - name: Run Ruff Format Checks
         run: uv run ruff format --check .
 
+  type-check-python:
+    name: Type Check Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Set Up Python Tooling
+        uses: ./.github/workflows/setup
+
+      - name: Run ty Type Checks
+        run: uv run ty check
+
   lint-markdown:
     name: Lint Markdown
     runs-on: ubuntu-latest

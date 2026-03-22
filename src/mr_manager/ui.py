@@ -178,8 +178,9 @@ class MrManagerApp(App[None]):
             return
 
         discovered_set = self._discovered_repo_set()
+        configured_repos_in_list = self._configured_repo_paths.intersection(self._displayed_repos)
         add_count = len(self._selected_repo_paths - self._configured_repo_paths)
-        remove_count = len(self._configured_repo_paths - self._selected_repo_paths)
+        remove_count = len(configured_repos_in_list - self._selected_repo_paths)
         missing_count = len(self._configured_repo_paths - discovered_set)
         status_line.update(
             "Discovered: "
@@ -207,12 +208,13 @@ class MrManagerApp(App[None]):
 
     def _save_changes(self) -> None:
         """Persist selected repository additions/removals to config file."""
+        configured_repos_in_list = self._configured_repo_paths.intersection(self._displayed_repos)
         repos_to_add = sorted(
             self._selected_repo_paths - self._configured_repo_paths,
             key=lambda repo: str(repo).lower(),
         )
         repos_to_remove = sorted(
-            self._configured_repo_paths - self._selected_repo_paths,
+            configured_repos_in_list - self._selected_repo_paths,
             key=lambda repo: str(repo).lower(),
         )
         section_names_to_remove = {

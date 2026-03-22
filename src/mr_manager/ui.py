@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from textual import work
+from rich.cells import cell_len
+from textual import events, work
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header, Label, LoadingIndicator, OptionList, Static
@@ -38,6 +39,8 @@ class MrManagerApp(App[None]):
         self._configured_repo_paths: set[Path] = set()
         self._selected_repo_paths: set[Path] = set()
         self._loading = True
+        self._scan_state_text = ""
+        self._scan_state_text_compact: str | None = None
 
     def _discovered_repo_set(self) -> set[Path]:
         """Return discovered repositories as a set for membership checks."""
@@ -61,6 +64,10 @@ class MrManagerApp(App[None]):
         repo_list.disabled = True
         self.query_one("#scan-state-result", Label).display = False
         self.load_repository_data()
+
+    def on_resize(self, _: events.Resize) -> None:
+        """Re-evaluate scan status layout whenever terminal size changes."""
+        self._apply_scan_state_layout()
 
     @work(thread=True, exclusive=True)
     def load_repository_data(self) -> None:
@@ -107,7 +114,10 @@ class MrManagerApp(App[None]):
         self.query_one("#scan-state-indicator", LoadingIndicator).display = False
         error_label = self.query_one("#scan-state-result", Label)
         error_label.display = True
-        error_label.update(f"Error Loading Repositories: {error}")
+        self._set_scan_state_text(
+            full=f"Error Loading Repositories: {error}",
+            compact="Error Loading Repositories.",
+        )
         repo_list = self.query_one("#repo-list", OptionList)
         repo_list.disabled = True
 
@@ -171,10 +181,11 @@ class MrManagerApp(App[None]):
 
     def _update_scan_state_result(self) -> None:
         """Update the top-right scan/result summary text."""
-        status_line = self.query_one("#scan-state-result", Label)
-
         if not self._displayed_repos:
-            status_line.update(f"No Git repositories found under {self._discover_root}.")
+            self._set_scan_state_text(
+                full=f"No Git repositories found under {self._discover_root}.",
+                compact="No Git repositories found.",
+            )
             return
 
         discovered_set = self._discovered_repo_set()
@@ -182,11 +193,68 @@ class MrManagerApp(App[None]):
         add_count = len(self._selected_repo_paths - self._configured_repo_paths)
         remove_count = len(configured_repos_in_list - self._selected_repo_paths)
         missing_count = len(self._configured_repo_paths - discovered_set)
-        status_line.update(
-            "Discovered: "
-            f"{len(self._discovered_repos)} | Missing: {missing_count} | "
-            f"To Add: {add_count} | To Remove: {remove_count}"
+        self._set_scan_state_text(
+            full=(
+                "Discovered: "
+                f"{len(self._discovered_repos)} | Missing: {missing_count} | "
+                f"To Add: {add_count} | To Remove: {remove_count}"
+            ),
+            compact=(
+                f"D:{len(self._discovered_repos)} | M:{missing_count} | "
+                f"+:{add_count} | -:{remove_count}"
+            ),
         )
+
+    def _set_scan_state_text(self, *, full: str, compact: str | None = None) -> None:
+        """Set scan status text variants and apply responsive layout.
+
+        Args:
+            full: Full status text preferred for wider terminals.
+            compact: Optional shortened variant for narrow terminals.
+        """
+        self._scan_state_text = full
+        self._scan_state_text_compact = compact
+        self._apply_scan_state_layout()
+
+    def _apply_scan_state_layout(self) -> None:
+        """Switch scan status between one-row and stacked layouts when needed."""
+        if not self.is_mounted:
+            return
+
+        status_label = self.query_one("#scan-state-result", Label)
+        scan_row = self.query_one("#scan-status-row", Horizontal)
+        scan_state = self.query_one("#scan-state", Horizontal)
+        indicator = self.query_one("#scan-state-indicator", LoadingIndicator)
+        full_text = self._scan_state_text
+        compact_text = self._scan_state_text_compact or full_text
+        row_width = scan_row.size.width
+        if row_width <= 0:
+            return
+
+        indicator_width = indicator.size.width if indicator.display else 0
+        full_required_width = cell_len(full_text) + indicator_width
+        compact_required_width = cell_len(compact_text) + indicator_width
+        one_row_status_width = (
+            scan_state.size.width if not scan_row.has_class("stacked") else max(1, row_width // 2)
+        )
+        stacked_status_width = row_width
+
+        if full_required_width <= one_row_status_width:
+            scan_row.remove_class("stacked")
+            status_label.update(full_text)
+            return
+
+        if full_required_width <= stacked_status_width:
+            scan_row.add_class("stacked")
+            status_label.update(full_text)
+            return
+
+        scan_row.add_class("stacked")
+        if compact_required_width <= stacked_status_width:
+            status_label.update(compact_text)
+            return
+
+        status_label.update(compact_text)
 
     def action_cursor_down(self) -> None:
         """Move list selection one row down."""

@@ -12,6 +12,11 @@ Screen {
     align: left middle;
 }
 
+#scan-status-row.stacked {
+    layout: vertical;
+    align: left top;
+}
+
 #scan-path {
     width: 1fr;
 }
@@ -20,6 +25,11 @@ Screen {
     height: auto;
     width: 1fr;
     align: right middle;
+}
+
+#scan-status-row.stacked #scan-state {
+    width: 1fr;
+    align: left middle;
 }
 
 #scan-state-indicator {

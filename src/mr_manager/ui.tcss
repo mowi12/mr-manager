@@ -2,6 +2,11 @@ Screen {
     layout: vertical;
 }
 
+UnsavedChangesModal {
+    align: center middle;
+    background: transparent;
+}
+
 #content {
     height: 1fr;
 }
@@ -43,4 +48,28 @@ Screen {
 #repo-list {
     height: 1fr;
     margin: 0 1 1 1;
+}
+
+#unsaved-changes-dialog {
+    width: 56;
+    max-width: 90%;
+    height: auto;
+    padding: 1 2;
+    border: round $surface;
+    background: $surface;
+}
+
+#unsaved-changes-message {
+    margin-bottom: 1;
+    text-align: center;
+}
+
+#unsaved-changes-actions {
+    width: 1fr;
+    height: auto;
+    align: center middle;
+}
+
+#unsaved-changes-actions Button {
+    margin: 0 1;
 }

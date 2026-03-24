@@ -8,10 +8,38 @@ from rich.cells import cell_len
 from textual import events, work
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Footer, Header, Label, LoadingIndicator, OptionList, Static
+from textual.screen import ModalScreen
+from textual.widgets import Button, Footer, Header, Label, LoadingIndicator, OptionList, Static
 
 from mr_manager.config import parse_configured_repo_sections, write_config_updates
 from mr_manager.discovery import discover_git_repositories
+
+
+class UnsavedChangesModal(ModalScreen[bool]):
+    """Modal that confirms closing when unsaved changes are present."""
+
+    def compose(self) -> ComposeResult:
+        """Compose the unsaved-changes confirmation dialog."""
+        with Vertical(id="unsaved-changes-dialog"):
+            yield Static(
+                "You Have Unsaved Changes.\nClose Without Saving?",
+                id="unsaved-changes-message",
+            )
+            with Horizontal(id="unsaved-changes-actions"):
+                yield Button("Go Back", id="unsaved-go-back", variant="primary")
+                yield Button("I'm Sure", id="unsaved-confirm-close", variant="error")
+
+    def on_mount(self) -> None:
+        """Focus the safe default action when the modal opens."""
+        self.query_one("#unsaved-go-back", Button).focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle dialog button presses.
+
+        Args:
+            event: Button press event.
+        """
+        self.dismiss(event.button.id == "unsaved-confirm-close")
 
 
 class MrManagerApp(App[None]):
@@ -25,7 +53,7 @@ class MrManagerApp(App[None]):
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
         ("s", "save", "Save"),
-        ("q", "quit_without_saving", "Quit"),
+        ("q", "quit_without_saving", "Quit/Close"),
     ]
 
     def __init__(self) -> None:
@@ -189,9 +217,8 @@ class MrManagerApp(App[None]):
             return
 
         discovered_set = self._discovered_repo_set()
-        configured_repos_in_list = self._configured_repo_paths.intersection(self._displayed_repos)
-        add_count = len(self._selected_repo_paths - self._configured_repo_paths)
-        remove_count = len(configured_repos_in_list - self._selected_repo_paths)
+        add_count = len(self._repos_to_add())
+        remove_count = len(self._repos_to_remove())
         missing_count = len(self._configured_repo_paths - discovered_set)
         self._set_scan_state_text(
             full=(
@@ -276,15 +303,8 @@ class MrManagerApp(App[None]):
 
     def _save_changes(self) -> None:
         """Persist selected repository additions/removals to config file."""
-        configured_repos_in_list = self._configured_repo_paths.intersection(self._displayed_repos)
-        repos_to_add = sorted(
-            self._selected_repo_paths - self._configured_repo_paths,
-            key=lambda repo: str(repo).lower(),
-        )
-        repos_to_remove = sorted(
-            configured_repos_in_list - self._selected_repo_paths,
-            key=lambda repo: str(repo).lower(),
-        )
+        repos_to_add = sorted(self._repos_to_add(), key=lambda repo: str(repo).lower())
+        repos_to_remove = sorted(self._repos_to_remove(), key=lambda repo: str(repo).lower())
         section_names_to_remove = {
             section_name
             for repo in repos_to_remove
@@ -301,6 +321,34 @@ class MrManagerApp(App[None]):
         self._save_changes()
         self.exit()
 
+    def _repos_to_add(self) -> set[Path]:
+        """Return selected repositories that are not yet configured."""
+        return self._selected_repo_paths - self._configured_repo_paths
+
+    def _repos_to_remove(self) -> set[Path]:
+        """Return configured displayed repositories that are now unselected."""
+        configured_repos_in_list = self._configured_repo_paths.intersection(self._displayed_repos)
+        return configured_repos_in_list - self._selected_repo_paths
+
+    def _has_unsaved_changes(self) -> bool:
+        """Return whether current selection differs from persisted config."""
+        return bool(self._repos_to_add() or self._repos_to_remove())
+
+    def _handle_unsaved_changes_modal_closed(self, should_close: bool | None) -> None:
+        """Process the unsaved-changes dialog decision.
+
+        Args:
+            should_close: True when user confirms closing without saving.
+        """
+        if should_close:
+            self.exit()
+            return
+        if self._displayed_repos and not self._loading:
+            self.query_one("#repo-list", OptionList).focus()
+
     def action_quit_without_saving(self) -> None:
-        """Exit the application without persisting pending changes."""
-        self.exit()
+        """Exit immediately or ask for confirmation when unsaved changes exist."""
+        if not self._has_unsaved_changes():
+            self.exit()
+            return
+        self.push_screen(UnsavedChangesModal(), self._handle_unsaved_changes_modal_closed)

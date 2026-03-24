@@ -8,10 +8,71 @@ from rich.cells import cell_len
 from textual import events, work
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.widgets import Footer, Header, Label, LoadingIndicator, OptionList, Static
+from textual.screen import ModalScreen
+from textual.widgets import Button, Footer, Header, Label, LoadingIndicator, OptionList, Static
 
 from mr_manager.config import parse_configured_repo_sections, write_config_updates
 from mr_manager.discovery import discover_git_repositories
+
+
+class UnsavedChangesModal(ModalScreen[bool]):
+    """Modal that confirms quitting when unsaved changes are present."""
+
+    def compose(self) -> ComposeResult:
+        """Compose the unsaved-changes quit confirmation dialog."""
+        with Vertical(id="unsaved-changes-dialog"):
+            yield Static(
+                "You Have Unsaved Changes.\nQuit Without Saving?",
+                id="unsaved-changes-message",
+            )
+            with Horizontal(id="unsaved-changes-actions"):
+                yield Button("Go Back", id="unsaved-go-back", variant="primary")
+                yield Button("I'm Sure", id="unsaved-confirm-quit", variant="error")
+
+    def on_mount(self) -> None:
+        """Focus the safe default action when the modal opens."""
+        self.query_one("#unsaved-go-back", Button).focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle dialog button presses.
+
+        Args:
+            event: Button press event.
+        """
+        self.dismiss(event.button.id == "unsaved-confirm-quit")
+
+
+class SaveSuccessModal(ModalScreen[bool]):
+    """Modal shown after saving configuration changes."""
+
+    def __init__(self, message: str) -> None:
+        """Initialize modal with a status message.
+
+        Args:
+            message: Message shown in the save status dialog.
+        """
+        super().__init__()
+        self._message = message
+
+    def compose(self) -> ComposeResult:
+        """Compose the save-success confirmation dialog."""
+        with Vertical(id="save-success-dialog"):
+            yield Static(self._message, id="save-success-message")
+            with Horizontal(id="save-success-actions"):
+                yield Button("Continue", id="save-go-back", variant="primary")
+                yield Button("Quit", id="save-quit")
+
+    def on_mount(self) -> None:
+        """Focus the safe default action when the modal opens."""
+        self.query_one("#save-go-back", Button).focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle save-success dialog button presses.
+
+        Args:
+            event: Button press event.
+        """
+        self.dismiss(event.button.id == "save-quit")
 
 
 class MrManagerApp(App[None]):
@@ -189,9 +250,8 @@ class MrManagerApp(App[None]):
             return
 
         discovered_set = self._discovered_repo_set()
-        configured_repos_in_list = self._configured_repo_paths.intersection(self._displayed_repos)
-        add_count = len(self._selected_repo_paths - self._configured_repo_paths)
-        remove_count = len(configured_repos_in_list - self._selected_repo_paths)
+        add_count = len(self._repos_to_add())
+        remove_count = len(self._repos_to_remove())
         missing_count = len(self._configured_repo_paths - discovered_set)
         self._set_scan_state_text(
             full=(
@@ -276,15 +336,8 @@ class MrManagerApp(App[None]):
 
     def _save_changes(self) -> None:
         """Persist selected repository additions/removals to config file."""
-        configured_repos_in_list = self._configured_repo_paths.intersection(self._displayed_repos)
-        repos_to_add = sorted(
-            self._selected_repo_paths - self._configured_repo_paths,
-            key=lambda repo: str(repo).lower(),
-        )
-        repos_to_remove = sorted(
-            configured_repos_in_list - self._selected_repo_paths,
-            key=lambda repo: str(repo).lower(),
-        )
+        repos_to_add = sorted(self._repos_to_add(), key=lambda repo: str(repo).lower())
+        repos_to_remove = sorted(self._repos_to_remove(), key=lambda repo: str(repo).lower())
         section_names_to_remove = {
             section_name
             for repo in repos_to_remove
@@ -294,13 +347,84 @@ class MrManagerApp(App[None]):
         if repos_to_add or section_names_to_remove:
             write_config_updates(self._config_path, repos_to_add, section_names_to_remove)
 
+    def _sync_config_state_after_save(self) -> bool:
+        """Refresh configured state from disk after writing the config."""
+        try:
+            sections_by_path = parse_configured_repo_sections(self._config_path)
+        except (OSError, UnicodeDecodeError) as error:
+            self.log(f"Failed to refresh config from disk after save: {error!r}")
+            self._set_scan_state_text(
+                full=f"Changes Saved, But Reload Failed: {error}",
+                compact="Changes Saved, Reload Failed.",
+            )
+            return False
+
+        self._repo_sections_by_path = sections_by_path
+        self._configured_repo_paths = set(sections_by_path.keys())
+        self._displayed_repos = sorted(
+            self._discovered_repo_set().union(self._configured_repo_paths),
+            key=lambda repo: str(repo).lower(),
+        )
+        self._selected_repo_paths = set(self._configured_repo_paths)
+        self._render_repository_list()
+        self._update_scan_state_result()
+        return True
+
+    def _handle_save_success_modal_quit(self, should_quit: bool | None) -> None:
+        """Process the save-success dialog decision.
+
+        Args:
+            should_quit: True when user selects the quit action.
+        """
+        if should_quit:
+            self.exit()
+            return
+        if self._displayed_repos and not self._loading:
+            self.query_one("#repo-list", OptionList).focus()
+
     def action_save(self) -> None:
-        """Save pending config changes and exit the application."""
+        """Save pending config changes and display success options."""
         if self._loading:
             return
-        self._save_changes()
-        self.exit()
+        has_changes = self._has_unsaved_changes()
+        if has_changes:
+            self._save_changes()
+            state_synced = self._sync_config_state_after_save()
+            message = (
+                "Changes Saved Successfully." if state_synced else "Changes Saved. Reload Failed."
+            )
+        else:
+            message = "No Changes To Save."
+        self.push_screen(SaveSuccessModal(message), self._handle_save_success_modal_quit)
+
+    def _repos_to_add(self) -> set[Path]:
+        """Return selected repositories that are not yet configured."""
+        return self._selected_repo_paths - self._configured_repo_paths
+
+    def _repos_to_remove(self) -> set[Path]:
+        """Return configured displayed repositories that are now unselected."""
+        configured_repos_in_list = self._configured_repo_paths.intersection(self._displayed_repos)
+        return configured_repos_in_list - self._selected_repo_paths
+
+    def _has_unsaved_changes(self) -> bool:
+        """Return whether current selection differs from persisted config."""
+        return bool(self._repos_to_add() or self._repos_to_remove())
+
+    def _handle_unsaved_changes_modal_quit(self, should_quit: bool | None) -> None:
+        """Process the unsaved-changes quit dialog decision.
+
+        Args:
+            should_quit: True when user confirms quitting without saving.
+        """
+        if should_quit:
+            self.exit()
+            return
+        if self._displayed_repos and not self._loading:
+            self.query_one("#repo-list", OptionList).focus()
 
     def action_quit_without_saving(self) -> None:
-        """Exit the application without persisting pending changes."""
-        self.exit()
+        """Exit immediately or ask for confirmation when unsaved changes exist."""
+        if not self._has_unsaved_changes():
+            self.exit()
+            return
+        self.push_screen(UnsavedChangesModal(), self._handle_unsaved_changes_modal_quit)

@@ -42,6 +42,39 @@ class UnsavedChangesModal(ModalScreen[bool]):
         self.dismiss(event.button.id == "unsaved-confirm-close")
 
 
+class SaveSuccessModal(ModalScreen[bool]):
+    """Modal shown after saving configuration changes."""
+
+    def __init__(self, message: str) -> None:
+        """Initialize modal with a status message.
+
+        Args:
+            message: Message shown in the save status dialog.
+        """
+        super().__init__()
+        self._message = message
+
+    def compose(self) -> ComposeResult:
+        """Compose the save-success confirmation dialog."""
+        with Vertical(id="save-success-dialog"):
+            yield Static(self._message, id="save-success-message")
+            with Horizontal(id="save-success-actions"):
+                yield Button("Continue", id="save-go-back", variant="primary")
+                yield Button("Quit", id="save-quit")
+
+    def on_mount(self) -> None:
+        """Focus the safe default action when the modal opens."""
+        self.query_one("#save-go-back", Button).focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle save-success dialog button presses.
+
+        Args:
+            event: Button press event.
+        """
+        self.dismiss(event.button.id == "save-quit")
+
+
 class MrManagerApp(App[None]):
     """Single-view app to toggle repository membership in myrepos config."""
 
@@ -314,12 +347,43 @@ class MrManagerApp(App[None]):
         if repos_to_add or section_names_to_remove:
             write_config_updates(self._config_path, repos_to_add, section_names_to_remove)
 
+    def _sync_config_state_after_save(self) -> None:
+        """Refresh configured state from disk after writing the config."""
+        sections_by_path = parse_configured_repo_sections(self._config_path)
+        self._repo_sections_by_path = sections_by_path
+        self._configured_repo_paths = set(sections_by_path.keys())
+        self._displayed_repos = sorted(
+            self._discovered_repo_set().union(self._configured_repo_paths),
+            key=lambda repo: str(repo).lower(),
+        )
+        self._selected_repo_paths = set(self._configured_repo_paths)
+        self._render_repository_list()
+        self._update_scan_state_result()
+
+    def _handle_save_success_modal_closed(self, should_quit: bool | None) -> None:
+        """Process the save-success dialog decision.
+
+        Args:
+            should_quit: True when user selects the quit action.
+        """
+        if should_quit:
+            self.exit()
+            return
+        if self._displayed_repos and not self._loading:
+            self.query_one("#repo-list", OptionList).focus()
+
     def action_save(self) -> None:
-        """Save pending config changes and exit the application."""
+        """Save pending config changes and display success options."""
         if self._loading:
             return
-        self._save_changes()
-        self.exit()
+        has_changes = self._has_unsaved_changes()
+        if has_changes:
+            self._save_changes()
+            self._sync_config_state_after_save()
+            message = "Changes Saved Successfully."
+        else:
+            message = "No Changes To Save."
+        self.push_screen(SaveSuccessModal(message), self._handle_save_success_modal_closed)
 
     def _repos_to_add(self) -> set[Path]:
         """Return selected repositories that are not yet configured."""

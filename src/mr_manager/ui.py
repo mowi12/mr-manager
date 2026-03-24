@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from rich.cells import cell_len
+from rich.text import Text
 from textual import events, work
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
@@ -13,6 +14,8 @@ from textual.widgets import Button, Footer, Header, Label, LoadingIndicator, Opt
 
 from mr_manager.config import parse_configured_repo_sections, write_config_updates
 from mr_manager.discovery import discover_git_repositories
+
+_TOGGLED_BULLET_COLOR = "#fca311"
 
 
 class UnsavedChangesModal(ModalScreen[bool]):
@@ -193,20 +196,30 @@ class MrManagerApp(App[None]):
             repo_list.highlighted = 0
             repo_list.focus()
 
-    def _render_repo_prompt(self, repo: Path) -> str:
+    def _render_repo_prompt(self, repo: Path) -> Text:
         """Render a single repository row with selected/unselected bullet.
 
         Args:
             repo: Repository path to render.
 
         Returns:
-            Display string for the repository list row.
+            Display text for the repository list row.
         """
         if self._is_missing_or_unreachable(repo):
             bullet = "◐" if repo in self._selected_repo_paths else "◌"
         else:
             bullet = "●" if repo in self._selected_repo_paths else "○"
-        return f"{bullet} {repo}"
+        bullet_style = _TOGGLED_BULLET_COLOR if self._is_repo_toggled(repo) else None
+        prompt = Text()
+        prompt.append(bullet, style=bullet_style)
+        prompt.append(f" {repo}")
+        return prompt
+
+    def _is_repo_toggled(self, repo: Path) -> bool:
+        """Return whether repository selection differs from persisted config."""
+        is_selected = repo in self._selected_repo_paths
+        is_configured = repo in self._configured_repo_paths
+        return is_selected != is_configured
 
     def _is_missing_or_unreachable(self, repo: Path) -> bool:
         """Return whether a repo is configured but not found during discovery.

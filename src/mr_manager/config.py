@@ -6,7 +6,7 @@ import re
 import subprocess
 from pathlib import Path
 
-_SECTION_HEADER_PATTERN = re.compile(r"^\s*\[([^\]]+)\]\s*$")
+_SECTION_HEADER_PATTERN = re.compile(r"^\s*\[([^]]+)]\s*$")
 
 
 def _normalize_repo_reference(config_path: Path, repo_reference: str) -> Path:

@@ -1,6 +1,6 @@
 [project]
 name = "mr-manager"
-version = "0.1.0"
+dynamic = ["version"]
 description = "TUI-based CLI for managing repositories inside a *myrepos* config file. Simplifies adding and removing repos with an interactive interface."
 authors = [
     { name = "Moritz Wieland", email = "moritz.wieland@googlemail.com" }
@@ -12,17 +12,21 @@ dependencies = [
     "textual>=8.1.1",
 ]
 
-[project.scripts]
-mr-manager = "mr_manager.main:main"
-
-[tool.uv]
-package = true
-
 [dependency-groups]
 dev = [
     "ruff>=0.15.7",
     "ty>=0.0.24",
 ]
+
+[project.scripts]
+mr-manager = "mr_manager.main:main"
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.ruff]
 target-version = "py313"

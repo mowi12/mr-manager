@@ -1,6 +1,7 @@
 # Release Process
 
-Releases are fully automated via GitHub Actions. Pushing a version tag is the only manual step required.
+Releases are fully automated via GitHub Actions.
+Updating the changelog and pushing a version tag are the only manual steps required.
 
 ## Versioning
 
@@ -11,10 +12,21 @@ Tag format: `vX.Y.Z` (e.g. `v1.2.0`)
 
 ## Releasing a new version
 
-```bash
-git tag vX.Y.Z
-git push origin vX.Y.Z
-```
+1. **Update the Changelog:** Open `CHANGELOG.md` and move all items from `[Unreleased]` into a new section
+   for the target version (e.g., `## [1.2.0] - YYYY-MM-DD`). Add a new empty `## [Unreleased]` block at the top.
+2. **Commit the changes:**
+
+    ```bash
+    git commit -am "chore: update changelog for vX.Y.Z"
+    git push origin main
+    ```
+
+3. **Tag and push:**
+
+    ```bash
+    git tag vX.Y.Z
+    git push origin vX.Y.Z
+    ```
 
 That's it. The CI pipeline takes over from here.
 
@@ -22,11 +34,16 @@ That's it. The CI pipeline takes over from here.
 
 Pushing a tag triggers the release workflow (`.github/workflows/release.yml`), which runs the following in order:
 
-`git tag` → CI Pipeline → Build Artifacts → Publish to All Channels
+`git tag` → CI Pipeline → Build Artifacts → Publish to All Channels → create GitHub Release
 
 ### PyPI
 
 Builds a wheel and sdist via `uv build`, publishes via `uv publish` using OIDC trusted publishing (no token required).
+
+### GitHub Releases
+
+Extracts the newly published release notes directly from `CHANGELOG.md`, appends download and installation instructions,
+creates a formal GitHub Release, and attaches the pre-built `sdist` and `wheel` artifacts.
 
 ## Required secrets
 
@@ -50,3 +67,7 @@ pipx install mr-manager==X.Y.Z
 
 Check the Actions log for OIDC errors. Confirm the trusted publisher is configured correctly on pypi.org
 (owner, repo, workflow filename, and environment name must all match exactly).
+
+### GitHub Release Creation Failed
+
+Verify that the tag exactly matches a section header in `CHANGELOG.md` (e.g., tag `v1.2.0` matches `## [1.2.0]`).

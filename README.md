@@ -3,7 +3,9 @@
 </div>
 
 <div align="center">
-    <img alt="Version" src="https://img.shields.io/badge/Version-v0.1.0-light_green">
+    <a href="https://github.com/mowi12/mr-manager/releases/latest">
+        <img alt="Version" src="https://img.shields.io/github/v/release/mowi12/mr-manager?label=Version&color=light-green">
+    </a>
     <a href="https://github.com/mowi12/mr-manager/actions/workflows/code_quality_checks.yml">
         <img alt="Code Quality Checks" src="https://img.shields.io/github/actions/workflow/status/mowi12/mr-manager/code_quality_checks.yml?logo=github&label=Code%20Quality">
     </a>

@@ -10,6 +10,7 @@ toggle which ones should be tracked.
 
 - [Contribution Guidelines](https://github.com/mowi12/mr-manager/wiki/Contribution-Guidelines)
 - [Troubleshooting](https://github.com/mowi12/mr-manager/wiki/Troubleshooting)
+- [Release Process](https://github.com/mowi12/mr-manager/wiki/Release-Process)
 
 ## What the app does
 
@@ -25,3 +26,11 @@ toggle which ones should be tracked.
 - `k`: Move up
 - `s`: Save changes
 - `q`: Quit (with unsaved-changes confirmation when needed)
+
+## Installation
+
+| Channel       | Command                   |
+|---------------|---------------------------|
+| Python (pipx) | `pipx install mr-manager` |
+
+See the [README](https://github.com/mowi12/mr-manager#installation) for full installation instructions per channel.

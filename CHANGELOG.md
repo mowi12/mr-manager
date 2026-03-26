@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-03-26
+
 ### Added
 
 - Initial TUI-based CLI application for managing myrepos (`.mrconfig`) file.
@@ -15,4 +17,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Config file parsing and section normalization for various path formats.
 - Unsaved changes detection and confirmation dialogs.
 
-[unreleased]: https://github.com/mowi12/mr-manager/compare/83ced2ad98ff2d0d547997b7a905a37ebe83a475...HEAD
+[unreleased]: https://github.com/mowi12/mr-manager/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/mowi12/mr-manager/releases/tag/v0.0.1

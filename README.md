@@ -36,20 +36,20 @@ directory and lets you toggle which ones are tracked.
 
 ## Installation
 
-Prerequisites:
+### Python (pipx)
 
-- Python `>=3.13`
-- `uv`
+Requires Python `>=3.13`.
 
-Setup:
+```bash
+pipx install mr-manager
+```
+
+### From source
+
+Prerequisites: Python `>=3.13`, `uv`
 
 ```bash
 uv sync --dev
-```
-
-Run:
-
-```bash
 uv run mr-manager
 ```
 
@@ -80,3 +80,4 @@ via CI.
 - [Wiki Home](https://github.com/mowi12/mr-manager/wiki)
 - [Contribution Guidelines](https://github.com/mowi12/mr-manager/wiki/Contribution-Guidelines)
 - [Troubleshooting](https://github.com/mowi12/mr-manager/wiki/Troubleshooting)
+- [Release Process](https://github.com/mowi12/mr-manager/wiki/Release-Process)

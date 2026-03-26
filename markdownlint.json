@@ -5,6 +5,7 @@
         "tables": false
     },
     "first-line-heading": false,
+    "no-duplicate-heading": false,
     "table-column-style": "aligned",
     "no-inline-html": {
         "allowed_elements": ["div", "picture", "img", "a", "h1"]

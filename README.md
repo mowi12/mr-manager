@@ -1,4 +1,82 @@
-# mr-manager
+<div align="center">
+  <h1>mr-manager</h1>
+</div>
 
-TUI-based CLI for managing repositories inside a *myrepos* config file. Simplifies adding and removing repos with an
-interactive interface.
+<div align="center">
+    <img alt="Version" src="https://img.shields.io/badge/Version-v0.1.0-light_green">
+    <a href="https://github.com/mowi12/mr-manager/actions/workflows/code_quality_checks.yml">
+        <img alt="Code Quality Checks" src="https://img.shields.io/github/actions/workflow/status/mowi12/mr-manager/code_quality_checks.yml?logo=github&label=Code%20Quality">
+    </a>
+    <a href="https://github.com/mowi12/mr-manager/wiki">
+        <img alt="GitHub Wiki" src="https://img.shields.io/badge/Wiki-grey?logo=github">
+    </a>
+    <a href="https://deepwiki.com/mowi12/mr-manager">
+        <img alt="Ask DeepWiki" src="https://deepwiki.com/badge.svg">
+    </a>
+    <a href="https://github.com/mowi12/mr-manager/blob/main/LICENSE">
+        <img alt="License" src="https://img.shields.io/github/license/mowi12/mr-manager?label=License">
+    </a>
+</div>
+
+---
+
+`mr-manager` is a Textual TUI for managing repositories in your
+`~/.mrconfig` [myrepos](https://myrepos.branchable.com/) file. It discovers Git repositories under your home
+directory and lets you toggle which ones are tracked.
+
+![mr-manager-tui.png](assets/screenshots/mr-manager-tui.png)
+
+## Features
+
+- Discovers local Git repositories recursively.
+- Reads existing repo sections from `~/.mrconfig`.
+- Interactive keyboard-driven selection UI.
+- Saves add/remove config updates safely.
+- Highlights missing configured repositories.
+
+## Installation
+
+Prerequisites:
+
+- Python `>=3.13`
+- `uv`
+
+Setup:
+
+```bash
+uv sync --dev
+```
+
+Run:
+
+```bash
+uv run mr-manager
+```
+
+## Usage and keybindings
+
+- `space`: Toggle selected repository
+- `j`: Move down
+- `k`: Move up
+- `s`: Save changes
+- `q`: Quit (asks for confirmation if unsaved changes exist)
+
+## Development workflow
+
+Run checks locally before opening a PR:
+
+```bash
+uv run ruff check --no-fix .
+uv run ruff format --check .
+uv run ty check
+markdownlint --config markdownlint.json --ignore-path .markdownlintignore "**/*.md"
+```
+
+## Documentation
+
+Project docs are maintained in the `wiki/` folder and published to GitHub Wiki
+via CI.
+
+- [Wiki Home](https://github.com/mowi12/mr-manager/wiki)
+- [Contribution Guidelines](https://github.com/mowi12/mr-manager/wiki/Contribution-Guidelines)
+- [Troubleshooting](https://github.com/mowi12/mr-manager/wiki/Troubleshooting)

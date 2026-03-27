@@ -14,7 +14,7 @@ toggle which ones should be tracked.
 
 ## What the app does
 
-- Scans your home directory for Git repositories.
+- Scans your home directory for Git repositories (results are cached for 24 hours).
 - Reads existing configured repos from `~/.mrconfig`.
 - Lets you toggle repositories with keyboard controls.
 - Writes add/remove changes back to `~/.mrconfig`.
@@ -25,6 +25,7 @@ toggle which ones should be tracked.
 - `j`: Move down
 - `k`: Move up
 - `s`: Save changes
+- `r`: Refresh repository scan (bypasses cache)
 - `q`: Quit (with unsaved-changes confirmation when needed)
 
 ## Installation

@@ -31,6 +31,7 @@ directory and lets you toggle which ones are tracked.
 ## Features
 
 - Discovers local Git repositories recursively.
+- Fast startup using a cached filesystem scan (24-hour TTL).
 - Reads existing repo sections from `~/.mrconfig`.
 - Interactive keyboard-driven selection UI.
 - Saves add/remove config updates safely.
@@ -61,6 +62,7 @@ uv run mr-manager
 - `j`: Move down
 - `k`: Move up
 - `s`: Save changes
+- `r`: Refresh repository scan (bypasses cache)
 - `q`: Quit (asks for confirmation if unsaved changes exist)
 
 ## Development workflow

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Discovered repositories are now cached for 24 hours to ensure instant startup.
+- Added `r` keybinding to manually trigger a fresh filesystem scan and update the cache.
+
 ## [0.0.1] - 2026-03-26
 
 ### Added

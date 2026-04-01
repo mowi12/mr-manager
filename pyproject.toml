@@ -35,3 +35,6 @@ fix = true
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+
+[tool.ty.src]
+exclude = ["scripts/"]

@@ -22,7 +22,7 @@
 
 ---
 
-`mr-manager` is a Textual TUI for managing repositories in your
+`mr-manager` is a [Textual](https://textual.textualize.io/) TUI for managing repositories in your
 `~/.mrconfig` [myrepos](https://myrepos.branchable.com/) file. It discovers Git repositories under your home
 directory and lets you toggle which ones are tracked.
 

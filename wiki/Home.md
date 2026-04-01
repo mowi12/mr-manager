@@ -2,7 +2,7 @@
 
 Welcome to the project wiki for `mr-manager`.
 
-`mr-manager` is a Textual TUI that helps you manage repository sections in your
+`mr-manager` is a [Textual](https://textual.textualize.io/) TUI that helps you manage repository sections in your
 `~/.mrconfig` [myrepos](https://myrepos.branchable.com/) file by scanning local Git repositories and letting you
 toggle which ones should be tracked.
 

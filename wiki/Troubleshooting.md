@@ -1,5 +1,10 @@
 # Troubleshooting
 
+## Newly cloned repositories are missing
+
+- `mr-manager` caches discovered repositories for 24 hours to launch instantly.
+- If you just cloned a new repository, press `r` in the app to force a fresh scan.
+
 ## No repositories discovered
 
 - Verify repositories exist under your home directory.

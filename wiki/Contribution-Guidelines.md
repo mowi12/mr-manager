@@ -47,3 +47,22 @@ Examples:
 - Update docs when behavior changes.
 - Ensure CI passes.
 - Prefer clear, short descriptions and rationale in the PR body.
+
+## Performance Testing
+
+If you are changing discovery logic, please run the benchmark script before opening a PR to ensure no performance
+regression:
+
+```bash
+uv run scripts/benchmark.py
+```
+
+To compare specific versions or rerun only specific phases:
+
+```bash
+# Compare selected refs
+uv run scripts/benchmark.py --versions v0.0.1 main --runs 10
+
+# Regenerate summary and plot from existing data.json
+uv run scripts/benchmark.py --steps summary,plot --data-file .cache/mr-manager/benchmarks/<id>/data.json
+```

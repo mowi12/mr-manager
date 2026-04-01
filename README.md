@@ -31,6 +31,7 @@ directory and lets you toggle which ones are tracked.
 ## Features
 
 - Discovers local Git repositories recursively.
+- Fast startup using a cached filesystem scan (24-hour TTL).
 - Reads existing repo sections from `~/.mrconfig`.
 - Interactive keyboard-driven selection UI.
 - Saves add/remove config updates safely.
@@ -61,6 +62,7 @@ uv run mr-manager
 - `j`: Move down
 - `k`: Move up
 - `s`: Save changes
+- `r`: Refresh repository scan (bypasses cache)
 - `q`: Quit (asks for confirmation if unsaved changes exist)
 
 ## Development workflow
@@ -73,6 +75,38 @@ uv run ruff format --check .
 uv run ty check
 markdownlint --config markdownlint.json --ignore-path .markdownlintignore "**/*.md"
 ```
+
+## Performance Benchmarking
+
+The project includes a benchmarking script to track performance regressions across versions:
+
+```bash
+# Run a quick benchmark
+uv run scripts/benchmark.py --runs 5
+```
+
+The benchmark supports step-based execution and persistent artifacts for later analysis:
+
+```bash
+# Full local run (collect + text summary + graph)
+uv run scripts/benchmark.py --runs 5
+
+# CI-style text-only run
+uv run scripts/benchmark.py --runs 10 --steps collect,summary
+```
+
+Default artifacts are saved in `.cache/mr-manager/benchmarks/<benchmark-id>/`:
+
+- `data.json` raw measurements
+- `summary.txt` textual report
+- `plot.png` graph (when `plot` step is enabled)
+
+Useful options:
+
+- `--versions v0.0.1 main` to benchmark specific refs
+- `--scan-root <path>` to control discovery root
+- `--steps collect,summary,plot` to resume from previous data
+- `--force-collect` to overwrite existing `data.json`
 
 ## Documentation
 

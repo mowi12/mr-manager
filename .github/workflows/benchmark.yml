@@ -1,0 +1,76 @@
+name: Benchmark
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  run-benchmark:
+    name: Run Performance Benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set Up Python Tooling
+        uses: ./.github/workflows/setup
+
+      - name: Create Benchmark Fixture Repositories
+        run: |
+          fixture_root="$RUNNER_TEMP/benchmark-fixtures"
+          rm -rf "$fixture_root"
+          mkdir -p "$fixture_root/active" "$fixture_root/archived"
+          for i in $(seq -w 1 50); do
+            group_dir="$fixture_root/active"
+            if [ $((10#$i % 5)) -eq 0 ]; then
+              group_dir="$fixture_root/archived"
+            fi
+            repo_dir="$group_dir/repo-$i"
+            mkdir -p "$repo_dir"
+            git init "$repo_dir" >/dev/null
+            mkdir -p "$repo_dir/src/module" "$repo_dir/tests" "$repo_dir/docs" "$repo_dir/scripts"
+            printf "# Fixture repo %s\n\nBenchmark fixture content.\n" "$i" > "$repo_dir/README.md"
+            printf "def value() -> int:\n    return %s\n" "$((10#$i))" > "$repo_dir/src/module/value.py"
+            printf "from src.module.value import value\n\n\ndef test_value() -> None:\n    assert value() >= 1\n" > "$repo_dir/tests/test_value.py"
+            printf "run-%s\n" "$i" > "$repo_dir/scripts/task.txt"
+            for j in $(seq 1 15); do
+              printf "line %s for repo %s\n" "$j" "$i" >> "$repo_dir/docs/notes.md"
+            done
+            git -C "$repo_dir" add . >/dev/null
+            git -C "$repo_dir" -c user.name=Fixture -c user.email=fixture@example.com commit -m "fixture repo $i" >/dev/null
+          done
+          echo "BENCHMARK_SCAN_ROOT=$fixture_root" >> "$GITHUB_ENV"
+
+      - name: Run Benchmark
+        run: |
+          uv run scripts/benchmark.py \
+            --runs 10 \
+            --steps collect,summary \
+            --scan-root "$BENCHMARK_SCAN_ROOT" \
+            --output-dir .cache/mr-manager/benchmarks \
+            --benchmark-id "pr-${{ github.event.pull_request.number }}-${{ github.sha }}"
+
+      - name: Prepare Benchmark Comment
+        id: benchmark_comment
+        run: |
+          summary_path=".cache/mr-manager/benchmarks/pr-${{ github.event.pull_request.number }}-${{ github.sha }}/summary.txt"
+          {
+            echo "message<<EOF"
+            echo "### 🚀 Performance Benchmark Results"
+            echo
+            echo "\`\`\`text"
+            cat "$summary_path"
+            echo "\`\`\`"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment Benchmark Results
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          comment-tag: benchmark_results
+          message: ${{ steps.benchmark_comment.outputs.message }}

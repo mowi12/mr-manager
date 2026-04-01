@@ -12,6 +12,7 @@ from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Header, Label, LoadingIndicator, OptionList, Static
 
+from mr_manager.cache import load_cached_repositories, save_cached_repositories
 from mr_manager.config import parse_configured_repo_sections, write_config_updates
 from mr_manager.discovery import discover_git_repositories
 
@@ -89,6 +90,7 @@ class MrManagerApp(App[None]):
         ("j", "cursor_down", "Down"),
         ("k", "cursor_up", "Up"),
         ("s", "save", "Save"),
+        ("r", "refresh_scan", "Refresh Scan"),
         ("q", "quit_without_saving", "Quit"),
     ]
 
@@ -134,11 +136,20 @@ class MrManagerApp(App[None]):
         self._apply_scan_state_layout()
 
     @work(thread=True, exclusive=True)
-    def load_repository_data(self) -> None:
+    def load_repository_data(self, force_scan: bool = False) -> None:
         """Load discovered repositories and configured repo sections in a worker."""
         try:
-            discovered = discover_git_repositories(self._discover_root)
             sections_by_path = parse_configured_repo_sections(self._config_path)
+
+            discovered = None
+            if not force_scan:
+                discovered = load_cached_repositories()
+
+            if discovered is None:
+                # Cache was missing, expired, or we forced a scan
+                discovered = discover_git_repositories(self._discover_root)
+                save_cached_repositories(discovered)
+
         except (OSError, UnicodeDecodeError, RuntimeError, ValueError) as error:
             self.call_from_thread(self._handle_repository_load_error, error)
         else:
@@ -409,6 +420,24 @@ class MrManagerApp(App[None]):
         else:
             message = "No Changes To Save."
         self.push_screen(SaveSuccessModal(message), self._handle_save_success_modal_quit)
+
+    def action_refresh_scan(self) -> None:
+        """Force a fresh filesystem scan and bypass the cache."""
+        if self._loading:
+            return
+
+        self._loading = True
+        self.query_one("#repo-list", OptionList).disabled = True
+
+        # Switch the UI back to a loading state
+        scan_state_result = self.query_one("#scan-state-result", Label)
+        scan_state_result.display = False
+        self.query_one("#scan-state-indicator", LoadingIndicator).display = True
+
+        self._set_scan_state_text(full=f"Scanning: {self._discover_root}", compact="Scanning...")
+
+        # Trigger the worker thread with force_scan=True
+        self.load_repository_data(force_scan=True)
 
     def _repos_to_add(self) -> set[Path]:
         """Return selected repositories that are not yet configured."""

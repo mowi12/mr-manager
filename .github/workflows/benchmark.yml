@@ -1,0 +1,49 @@
+name: Benchmark
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  run-benchmark:
+    name: Run Performance Benchmark
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set Up Python Tooling
+        uses: ./.github/workflows/setup
+
+      - name: Run Benchmark
+        run: |
+          uv run scripts/benchmark.py \
+            --runs 10 \
+            --steps collect,summary \
+            --output-dir .cache/mr-manager/benchmarks \
+            --benchmark-id "pr-${{ github.event.pull_request.number }}-${{ github.sha }}"
+
+      - name: Prepare Benchmark Comment
+        id: benchmark_comment
+        run: |
+          summary_path=".cache/mr-manager/benchmarks/pr-${{ github.event.pull_request.number }}-${{ github.sha }}/summary.txt"
+          {
+            echo "message<<EOF"
+            echo "### 🚀 Performance Benchmark Results"
+            echo
+            echo "\`\`\`text"
+            cat "$summary_path"
+            echo "\`\`\`"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Comment Benchmark Results
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          comment-tag: benchmark_results
+          message: ${{ steps.benchmark_comment.outputs.message }}

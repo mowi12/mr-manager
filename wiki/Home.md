@@ -35,3 +35,15 @@ toggle which ones should be tracked.
 | Python (pipx) | `pipx install mr-manager` |
 
 See the [README](https://github.com/mowi12/mr-manager#installation) for full installation instructions per channel.
+
+## Performance Tracking
+
+`mr-manager` tracks performance via a benchmarking script (`scripts/benchmark.py`).
+It compares total startup time and "time-per-repository" efficiency across Git versions
+to ensure performance stays optimal.
+
+The script supports:
+
+- Local benchmarking with persisted text and graph artifacts
+- CI-friendly benchmarking with text-only output (`--steps collect,summary`)
+- Step-based runs (`collect`, `summary`, `plot`) to reuse prior collected data

@@ -19,6 +19,11 @@ toggle which ones should be tracked.
 - Lets you toggle repositories with keyboard controls.
 - Writes add/remove changes back to `~/.mrconfig`.
 
+## Usage
+
+- `mr-manager`: Start the interactive TUI
+- `mr-manager -v`: Print the installed version and exit
+
 ## Keybindings
 
 - `space`: Toggle selected repository

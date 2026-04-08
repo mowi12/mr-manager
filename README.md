@@ -56,7 +56,12 @@ uv sync --dev
 uv run mr-manager
 ```
 
-## Usage and keybindings
+## Usage
+
+- `mr-manager`: Start the interactive TUI
+- `mr-manager -v`: Print the installed version and exit
+
+## Keybindings
 
 - `space`: Toggle selected repository
 - `j`: Move down

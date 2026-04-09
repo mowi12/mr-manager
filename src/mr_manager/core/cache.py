@@ -26,6 +26,8 @@ def load_cached_repositories(
     Raises:
         ValueError: cache_ttl_hours is not greater than zero.
     """
+    return None
+
     if cache_ttl_hours <= 0:
         msg = "cache_ttl_hours must be greater than 0."
         raise ValueError(msg)

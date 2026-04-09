@@ -26,28 +26,30 @@ def _normalize_repo_reference(config_path: Path, repo_reference: str) -> Path:
 
 
 def parse_configured_repo_sections(config_path: Path) -> dict[Path, list[str]]:
-    """Parse repository section headers from a myrepos config file.
+    """Mocked config parsing for screenshots."""
+    base_dir = Path("/Users/moritz")
+    return {
+        # Configured repos that are present on disk (matches mocked discovery)
+        base_dir / "work" / "api-service": ["work/api-service"],
+        base_dir / "open-source" / "docs-site": ["open-source/docs-site"],
+        base_dir / "open-source" / "shared-utils": ["open-source/shared-utils"],
+        base_dir / "open-source" / "cli-tools": ["open-source/cli-tools"],
 
-    Args:
-        config_path: Path to the myrepos config file.
+        # 4 configured repos that are missing from the mock discovery
+        base_dir / "work" / "archived-service": ["work/archived-service"],
+        base_dir / "projects" / "temp-hackathon": ["projects/temp-hackathon"],
+        base_dir / "experiments" / "old-experiments": ["experiments/old-experiments"],
+        base_dir / "open-source" / "deprecated-tool": ["open-source/deprecated-tool"],
+    }
 
-    Returns:
-        Mapping of normalized repository path to original section names.
-    """
-    if not config_path.exists():
-        return {}
 
-    configured: dict[Path, list[str]] = {}
-    for line in config_path.read_text(encoding="utf-8").splitlines():
-        match = _SECTION_HEADER_PATTERN.match(line)
-        if not match:
-            continue
-        section_name = match.group(1).strip()
-        if section_name.upper() == "DEFAULT":
-            continue
-        normalized_path = _normalize_repo_reference(config_path, section_name)
-        configured.setdefault(normalized_path, []).append(section_name)
-    return configured
+def write_config_updates(
+        config_path: Path,
+        repos_to_add: list[Path],
+        section_names_to_remove: set[str],
+) -> None:
+    """No-op to prevent writing mock data to actual config files."""
+    pass
 
 
 def _remove_sections_by_name(lines: list[str], section_names_to_remove: set[str]) -> list[str]:

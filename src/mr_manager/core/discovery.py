@@ -40,22 +40,24 @@ def _should_descend_directory(directory_name: str) -> bool:
 
 
 def discover_git_repositories(root: Path) -> list[Path]:
-    """Discover Git repositories recursively below a root directory.
-
-    Args:
-        root: Filesystem directory used as scan root.
-
-    Returns:
-        Sorted absolute repository paths where a `.git` directory exists.
-    """
-    discovered: list[Path] = []
-    for current_root, dirs, _ in os.walk(root, topdown=True):
-        if ".git" in dirs:
-            discovered.append(Path(current_root).resolve())
-            # Repo detected: skip descending into its working tree for speed.
-            dirs.clear()
-            continue
-
-        dirs[:] = [directory for directory in dirs if _should_descend_directory(directory)]
-
-    return sorted(discovered, key=lambda repo: str(repo).lower())
+    """Mocked repository discovery for screenshots."""
+    base_dir = Path("/Users/moritz")
+    repo_paths =[
+        base_dir / "experiments" / "data-pipeline",
+        base_dir / "experiments" / "dev-environment",
+        base_dir / "experiments" / "ml-models",
+        base_dir / "experiments" / "scripts",
+        base_dir / "open-source" / "cli-tools",
+        base_dir / "open-source" / "component-library",
+        base_dir / "open-source" / "docs-site",
+        base_dir / "open-source" / "shared-utils",
+        base_dir / "projects" / "frontend-app",
+        base_dir / "projects" / "landing-page",
+        base_dir / "projects" / "mobile-app",
+        base_dir / "projects" / "web-client",
+        base_dir / "work" / "api-service",
+        base_dir / "work" / "auth-backend",
+        base_dir / "work" / "infrastructure",
+        base_dir / "work" / "payment-gateway",
+    ]
+    return sorted(repo_paths)

@@ -8,6 +8,7 @@ from rich.cells import cell_len
 from rich.text import Text
 from textual import events, work
 from textual.app import App, ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import Button, Footer, Header, Label, LoadingIndicator, OptionList, Static
@@ -91,7 +92,7 @@ class MrManagerApp(App[None]):
         ("k", "cursor_up", "Up"),
         ("s", "save", "Save"),
         ("r", "refresh_scan", "Refresh Scan"),
-        ("q", "quit_without_saving", "Quit"),
+        Binding("q,escape", "quit_without_saving", "Quit", key_display="q/ESC"),
     ]
 
     def __init__(self) -> None:

@@ -31,7 +31,7 @@ toggle which ones should be tracked.
 - `k`: Move up
 - `s`: Save changes
 - `r`: Refresh repository scan (bypasses cache)
-- `q`: Quit (with unsaved-changes confirmation when needed)
+- `q/ESC`: Quit (with unsaved-changes confirmation when needed)
 
 ## Installation
 

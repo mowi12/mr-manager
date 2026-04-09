@@ -68,7 +68,7 @@ uv run mr-manager
 - `k`: Move up
 - `s`: Save changes
 - `r`: Refresh repository scan (bypasses cache)
-- `q`: Quit (asks for confirmation if unsaved changes exist)
+- `q/ESC`: Quit (asks for confirmation if unsaved changes exist)
 
 ## Development workflow
 

@@ -6,23 +6,36 @@ import json
 import time
 from pathlib import Path
 
+from mr_manager.core.user_config import DEFAULT_DISCOVERY_CACHE_TTL_SECONDS
+
 # Use the standard user cache directory
 _CACHE_FILE = Path.home() / ".cache" / "mr-manager" / "discovery_cache.json"
-_CACHE_TTL_SECONDS = 86400  # 24 hours
 
 
-def load_cached_repositories() -> list[Path] | None:
+def load_cached_repositories(
+    cache_ttl_seconds: int = DEFAULT_DISCOVERY_CACHE_TTL_SECONDS,
+) -> list[Path] | None:
     """Load repositories from cache if the cache is valid and not expired.
+
+    Args:
+        cache_ttl_seconds: Maximum cache age in seconds before expiration.
 
     Returns:
         List of absolute repository paths, or None if cache is missing/expired.
+
+    Raises:
+        ValueError: cache_ttl_seconds is not greater than zero.
     """
+    if cache_ttl_seconds <= 0:
+        msg = "cache_ttl_seconds must be greater than 0."
+        raise ValueError(msg)
+
     if not _CACHE_FILE.exists():
         return None
 
     # Check expiration (Time-To-Live)
     file_age = time.time() - _CACHE_FILE.stat().st_mtime
-    if file_age > _CACHE_TTL_SECONDS:
+    if file_age > cache_ttl_seconds:
         return None
 
     try:

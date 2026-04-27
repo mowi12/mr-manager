@@ -7,6 +7,7 @@ from pathlib import Path
 from mr_manager.core.cache import load_cached_repositories, save_cached_repositories
 from mr_manager.core.config import parse_configured_repo_sections, write_config_updates
 from mr_manager.core.discovery import discover_git_repositories
+from mr_manager.core.user_config import UserConfig, load_user_config
 from mr_manager.ui.selection.model import RepositorySelectionModel
 
 
@@ -19,19 +20,37 @@ class RepositorySelectionController:
 
     def load_repository_data(
         self, force_scan: bool = False
-    ) -> tuple[list[Path], dict[Path, list[str]]]:
+    ) -> tuple[list[Path], dict[Path, list[str]], str | None]:
         """Load discovered repositories and configured repo sections."""
+        config_warning: str | None = None
+        try:
+            self.apply_user_config(load_user_config())
+        except (OSError, ValueError) as error:
+            config_warning = f"Config Load Failed: {error}"
+
         sections_by_path = parse_configured_repo_sections(self.model.config_path)
 
         discovered = None
         if not force_scan:
-            discovered = load_cached_repositories()
+            discovered = load_cached_repositories(self.model.discovery_cache_ttl_seconds)
 
         if discovered is None:
             discovered = discover_git_repositories(self.model.discover_root)
             save_cached_repositories(discovered)
 
-        return discovered, sections_by_path
+        return discovered, sections_by_path, config_warning
+
+    def get_current_user_config(self) -> UserConfig:
+        """Return current model settings in persistent user-config shape."""
+        return UserConfig(
+            discovery_cache_ttl_seconds=self.model.discovery_cache_ttl_seconds,
+            discovery_root=self.model.discover_root,
+        )
+
+    def apply_user_config(self, user_config: UserConfig) -> None:
+        """Apply user-config values to controller model state."""
+        self.model.discovery_cache_ttl_seconds = user_config.discovery_cache_ttl_seconds
+        self.model.discover_root = user_config.discovery_root
 
     def apply_repository_data(
         self, discovered: list[Path], sections_by_path: dict[Path, list[str]]

@@ -5,12 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from mr_manager.core.user_config import DEFAULT_DISCOVERY_CACHE_TTL_SECONDS
+
 
 @dataclass
 class RepositorySelectionModel:
     """State model for repository selection and scan status."""
 
     discover_root: Path = field(default_factory=Path.home)
+    discovery_cache_ttl_seconds: int = DEFAULT_DISCOVERY_CACHE_TTL_SECONDS
     config_path: Path = field(default_factory=lambda: Path.home() / ".mrconfig")
     discovered_repos: list[Path] = field(default_factory=list)
     displayed_repos: list[Path] = field(default_factory=list)

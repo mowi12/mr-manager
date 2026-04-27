@@ -71,22 +71,39 @@ class MrManagerApp(App[None]):
     def load_repository_data(self, force_scan: bool = False) -> None:
         """Load discovered repositories and configured repo sections in a worker."""
         try:
-            discovered, sections_by_path = self._controller.load_repository_data(force_scan)
+            discovered, sections_by_path, config_warning = self._controller.load_repository_data(
+                force_scan
+            )
         except (OSError, UnicodeDecodeError, RuntimeError, ValueError) as error:
             self.call_from_thread(self._handle_repository_load_error, error)
         else:
-            self.call_from_thread(self._set_repository_data, discovered, sections_by_path)
+            self.call_from_thread(
+                self._set_repository_data,
+                discovered,
+                sections_by_path,
+                config_warning,
+            )
 
     def _set_repository_data(
-        self, discovered: list[Path], sections_by_path: dict[Path, list[str]]
+        self,
+        discovered: list[Path],
+        sections_by_path: dict[Path, list[str]],
+        config_warning: str | None = None,
     ) -> None:
         """Apply loaded repository and config data to UI state."""
         self._controller.apply_repository_data(discovered, sections_by_path)
         self._model.loading = False
+        self.query_one("#scan-path", Static).update(f"Scanning: {self._model.discover_root}")
         self.query_one("#scan-state-indicator", LoadingIndicator).display = False
         self.query_one("#scan-state-result", Label).display = True
         self._render_repository_list()
-        self._update_scan_state_result()
+        if config_warning is None:
+            self._update_scan_state_result()
+            return
+        self._set_scan_state_text(
+            full=f"{config_warning} Using Current In-Memory Values.",
+            compact="Config Load Failed. Using Current Values.",
+        )
 
     def _handle_repository_load_error(self, error: Exception) -> None:
         """Handle repository load failures from the worker thread."""

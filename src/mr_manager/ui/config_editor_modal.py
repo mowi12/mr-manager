@@ -68,7 +68,11 @@ class ConfigEditorModal(ModalScreen[UserConfig | None]):
         if ttl_hours <= 0:
             self._show_validation_error("Cache TTL must be greater than 0.")
             return None
-        discovery_root = Path(root_raw).expanduser().resolve(strict=False)
+        try:
+            discovery_root = Path(root_raw).expanduser().resolve(strict=False)
+        except (OSError, ValueError):
+            self._show_validation_error("Discovery root is not a valid path.")
+            return None
         return UserConfig(
             discovery_cache_ttl_hours=ttl_hours,
             discovery_root=discovery_root,

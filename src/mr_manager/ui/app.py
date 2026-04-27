@@ -12,9 +12,9 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header, Label, LoadingIndicator, OptionList, Static
 
-from mr_manager.cache import load_cached_repositories, save_cached_repositories
-from mr_manager.config import parse_configured_repo_sections, write_config_updates
-from mr_manager.discovery import discover_git_repositories
+from mr_manager.core.cache import load_cached_repositories, save_cached_repositories
+from mr_manager.core.config import parse_configured_repo_sections, write_config_updates
+from mr_manager.core.discovery import discover_git_repositories
 from mr_manager.ui.save_success_modal import SaveSuccessModal
 from mr_manager.ui.unsaved_changes_modal import UnsavedChangesModal
 

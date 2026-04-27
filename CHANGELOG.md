@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2026-04-27
+## [1.0.0] - 2026-04-27
 
 ### Added
 
@@ -43,8 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Config file parsing and section normalization for various path formats.
 - Unsaved changes detection and confirmation dialogs.
 
-[unreleased]: https://github.com/mowi12/mr-manager/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/mowi12/mr-manager/releases/tag/v0.1.0
+[unreleased]: https://github.com/mowi12/mr-manager/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/mowi12/mr-manager/releases/tag/v1.0.0
 [0.0.3]: https://github.com/mowi12/mr-manager/releases/tag/v0.0.3
 [0.0.2]: https://github.com/mowi12/mr-manager/releases/tag/v0.0.2
 [0.0.1]: https://github.com/mowi12/mr-manager/releases/tag/v0.0.1

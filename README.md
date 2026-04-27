@@ -31,11 +31,12 @@ directory and lets you toggle which ones are tracked.
 ## Features
 
 - Discovers local Git repositories recursively.
-- Fast startup using a cached filesystem scan (24-hour TTL).
+- Fast startup using a cached filesystem scan (configurable TTL).
 - Reads existing repo sections from `~/.mrconfig`.
 - Interactive keyboard-driven selection UI.
 - Saves add/remove config updates safely.
 - Highlights missing configured repositories.
+- User-configurable discovery root and cache TTL persisted in `~/.config/mr-manager/config.yaml`.
 
 ## Installation
 
@@ -68,7 +69,16 @@ uv run mr-manager
 - `k`: Move up
 - `s`: Save changes
 - `r`: Refresh repository scan (bypasses cache)
+- `c`: Open configuration editor
 - `q/ESC`: Quit (asks for confirmation if unsaved changes exist)
+
+## User configuration
+
+- Config file path: `~/.config/mr-manager/config.yaml`
+- When missing, defaults are used and the file is created when you save from the config editor.
+- Currently configurable:
+  - Discovery Cache TTL (hours)
+  - Discovery Root Directory
 
 ## Development workflow
 

@@ -12,7 +12,9 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header, Label, LoadingIndicator, OptionList, Static
 
+from mr_manager.core.user_config import UserConfig, save_user_config
 from mr_manager.ui.action_modal import ActionModal
+from mr_manager.ui.config_editor_modal import ConfigEditorModal
 from mr_manager.ui.selection.controller import RepositorySelectionController
 from mr_manager.ui.selection.model import RepositorySelectionModel
 
@@ -31,6 +33,7 @@ class MrManagerApp(App[None]):
         ("k", "cursor_up", "Up"),
         ("s", "save", "Save"),
         ("r", "refresh_scan", "Refresh Scan"),
+        ("c", "open_config_editor", "Config"),
         Binding("q,escape", "quit_without_saving", "Quit", key_display="q/ESC"),
     ]
 
@@ -71,22 +74,39 @@ class MrManagerApp(App[None]):
     def load_repository_data(self, force_scan: bool = False) -> None:
         """Load discovered repositories and configured repo sections in a worker."""
         try:
-            discovered, sections_by_path = self._controller.load_repository_data(force_scan)
+            discovered, sections_by_path, config_warning = self._controller.load_repository_data(
+                force_scan
+            )
         except (OSError, UnicodeDecodeError, RuntimeError, ValueError) as error:
             self.call_from_thread(self._handle_repository_load_error, error)
         else:
-            self.call_from_thread(self._set_repository_data, discovered, sections_by_path)
+            self.call_from_thread(
+                self._set_repository_data,
+                discovered,
+                sections_by_path,
+                config_warning,
+            )
 
     def _set_repository_data(
-        self, discovered: list[Path], sections_by_path: dict[Path, list[str]]
+        self,
+        discovered: list[Path],
+        sections_by_path: dict[Path, list[str]],
+        config_warning: str | None = None,
     ) -> None:
         """Apply loaded repository and config data to UI state."""
         self._controller.apply_repository_data(discovered, sections_by_path)
         self._model.loading = False
+        self.query_one("#scan-path", Static).update(f"Scanning: {self._model.discover_root}")
         self.query_one("#scan-state-indicator", LoadingIndicator).display = False
         self.query_one("#scan-state-result", Label).display = True
         self._render_repository_list()
-        self._update_scan_state_result()
+        if config_warning is None:
+            self._update_scan_state_result()
+            return
+        self._set_scan_state_text(
+            full=f"{config_warning} Using Current In-Memory Values.",
+            compact="Config Load Failed. Using Current Values.",
+        )
 
     def _handle_repository_load_error(self, error: Exception) -> None:
         """Handle repository load failures from the worker thread."""
@@ -288,6 +308,54 @@ class MrManagerApp(App[None]):
             compact="Scanning...",
         )
         self.load_repository_data(force_scan=True)
+
+    @work(thread=True, exclusive=True)
+    def save_user_config_in_background(self, user_config: UserConfig) -> None:
+        """Persist user settings without blocking the UI thread."""
+        try:
+            save_user_config(user_config)
+        except (OSError, ValueError) as error:
+            self.call_from_thread(self._handle_user_config_save_error, error)
+        else:
+            self.call_from_thread(self._handle_user_config_saved, user_config)
+
+    def _handle_user_config_save_error(self, error: Exception) -> None:
+        """Show config-save failure while keeping app state unchanged."""
+        self._set_scan_state_text(
+            full=f"Failed To Save Configuration: {error}",
+            compact="Failed To Save Configuration.",
+        )
+        if self._model.displayed_repos and not self._model.loading:
+            self.query_one("#repo-list", OptionList).focus()
+
+    def _handle_user_config_saved(self, user_config: UserConfig) -> None:
+        """Apply saved config to model and trigger an immediate rescan."""
+        self._controller.apply_user_config(user_config)
+        self.query_one("#scan-path", Static).update(f"Scanning: {self._model.discover_root}")
+        if self._model.loading:
+            return
+        self._set_scan_state_text(
+            full=f"Configuration Saved. Scanning: {self._model.discover_root}",
+            compact="Configuration Saved. Scanning...",
+        )
+        self.action_refresh_scan()
+
+    def _handle_config_editor_result(self, user_config: UserConfig | None) -> None:
+        """Process config editor result and persist updates when provided."""
+        if user_config is not None:
+            self.save_user_config_in_background(user_config)
+            return
+        if self._model.displayed_repos and not self._model.loading:
+            self.query_one("#repo-list", OptionList).focus()
+
+    def action_open_config_editor(self) -> None:
+        """Open modal editor for configurable discovery settings."""
+        if self._model.loading:
+            return
+        self.push_screen(
+            ConfigEditorModal(self._controller.get_current_user_config()),
+            self._handle_config_editor_result,
+        )
 
     def action_quit_without_saving(self) -> None:
         """Exit immediately or ask for confirmation when unsaved changes exist."""

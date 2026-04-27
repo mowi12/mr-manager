@@ -10,74 +10,15 @@ from textual import events, work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
-from textual.screen import ModalScreen
-from textual.widgets import Button, Footer, Header, Label, LoadingIndicator, OptionList, Static
+from textual.widgets import Footer, Header, Label, LoadingIndicator, OptionList, Static
 
 from mr_manager.cache import load_cached_repositories, save_cached_repositories
 from mr_manager.config import parse_configured_repo_sections, write_config_updates
 from mr_manager.discovery import discover_git_repositories
+from mr_manager.ui.save_success_modal import SaveSuccessModal
+from mr_manager.ui.unsaved_changes_modal import UnsavedChangesModal
 
 _TOGGLED_BULLET_COLOR = "#fca311"
-
-
-class UnsavedChangesModal(ModalScreen[bool]):
-    """Modal that confirms quitting when unsaved changes are present."""
-
-    def compose(self) -> ComposeResult:
-        """Compose the unsaved-changes quit confirmation dialog."""
-        with Vertical(id="unsaved-changes-dialog"):
-            yield Static(
-                "You Have Unsaved Changes.\nQuit Without Saving?",
-                id="unsaved-changes-message",
-            )
-            with Horizontal(id="unsaved-changes-actions"):
-                yield Button("Go Back", id="unsaved-go-back", variant="primary")
-                yield Button("I'm Sure", id="unsaved-confirm-quit", variant="error")
-
-    def on_mount(self) -> None:
-        """Focus the safe default action when the modal opens."""
-        self.query_one("#unsaved-go-back", Button).focus()
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle dialog button presses.
-
-        Args:
-            event: Button press event.
-        """
-        self.dismiss(event.button.id == "unsaved-confirm-quit")
-
-
-class SaveSuccessModal(ModalScreen[bool]):
-    """Modal shown after saving configuration changes."""
-
-    def __init__(self, message: str) -> None:
-        """Initialize modal with a status message.
-
-        Args:
-            message: Message shown in the save status dialog.
-        """
-        super().__init__()
-        self._message = message
-
-    def compose(self) -> ComposeResult:
-        """Compose the save-success confirmation dialog."""
-        with Vertical(id="save-success-dialog"):
-            yield Static(self._message, id="save-success-message")
-            with Horizontal(id="save-success-actions"):
-                yield Button("Continue", id="save-go-back", variant="primary")
-                yield Button("Quit", id="save-quit")
-
-    def on_mount(self) -> None:
-        """Focus the safe default action when the modal opens."""
-        self.query_one("#save-go-back", Button).focus()
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Handle save-success dialog button presses.
-
-        Args:
-            event: Button press event.
-        """
-        self.dismiss(event.button.id == "save-quit")
 
 
 class MrManagerApp(App[None]):

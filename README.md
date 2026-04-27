@@ -77,7 +77,7 @@ uv run mr-manager
 - Config file path: `~/.config/mr-manager/config.yaml`
 - When missing, defaults are used and the file is created when you save from the config editor.
 - Currently configurable:
-  - Discovery Cache TTL (seconds)
+  - Discovery Cache TTL (hours)
   - Discovery Root Directory
 
 ## Development workflow

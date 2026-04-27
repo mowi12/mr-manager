@@ -32,7 +32,7 @@ class RepositorySelectionController:
 
         discovered = None
         if not force_scan:
-            discovered = load_cached_repositories(self.model.discovery_cache_ttl_seconds)
+            discovered = load_cached_repositories(self.model.discovery_cache_ttl_hours)
 
         if discovered is None:
             discovered = discover_git_repositories(self.model.discover_root)
@@ -43,13 +43,13 @@ class RepositorySelectionController:
     def get_current_user_config(self) -> UserConfig:
         """Return current model settings in persistent user-config shape."""
         return UserConfig(
-            discovery_cache_ttl_seconds=self.model.discovery_cache_ttl_seconds,
+            discovery_cache_ttl_hours=self.model.discovery_cache_ttl_hours,
             discovery_root=self.model.discover_root,
         )
 
     def apply_user_config(self, user_config: UserConfig) -> None:
         """Apply user-config values to controller model state."""
-        self.model.discovery_cache_ttl_seconds = user_config.discovery_cache_ttl_seconds
+        self.model.discovery_cache_ttl_hours = user_config.discovery_cache_ttl_hours
         self.model.discover_root = user_config.discovery_root
 
     def apply_repository_data(

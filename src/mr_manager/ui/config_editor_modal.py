@@ -34,11 +34,11 @@ class ConfigEditorModal(ModalScreen[UserConfig | None]):
                 id="config-root-input",
                 placeholder="/path/to/scan",
             )
-            yield Label("Discovery Cache TTL (seconds)", id="config-cache-ttl-label")
+            yield Label("Discovery Cache TTL (hours)", id="config-cache-ttl-label")
             yield Input(
-                value=str(self._user_config.discovery_cache_ttl_seconds),
+                value=str(self._user_config.discovery_cache_ttl_hours),
                 id="config-cache-ttl-input",
-                placeholder="86400",
+                placeholder="24",
             )
             yield Label("", id="config-editor-error")
             with Horizontal(id="config-editor-actions"):
@@ -61,16 +61,16 @@ class ConfigEditorModal(ModalScreen[UserConfig | None]):
             self._show_validation_error("Discovery root is required.")
             return None
         try:
-            ttl_seconds = int(ttl_raw)
+            ttl_hours = int(ttl_raw)
         except ValueError:
             self._show_validation_error("Cache TTL must be an integer.")
             return None
-        if ttl_seconds <= 0:
+        if ttl_hours <= 0:
             self._show_validation_error("Cache TTL must be greater than 0.")
             return None
         discovery_root = Path(root_raw).expanduser().resolve(strict=False)
         return UserConfig(
-            discovery_cache_ttl_seconds=ttl_seconds,
+            discovery_cache_ttl_hours=ttl_hours,
             discovery_root=discovery_root,
         )
 

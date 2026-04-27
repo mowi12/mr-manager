@@ -39,17 +39,24 @@ if is_cold and cache_dir.exists():
     shutil.rmtree(cache_dir, ignore_errors=True)
 
 try:
-    from mr_manager.discovery import discover_git_repositories
+    from mr_manager.core.discovery import discover_git_repositories
 except ImportError as exc:
-    print(f"ERR|import_discovery|{exc}")
-    sys.exit(1)
+    try:
+        from mr_manager.discovery import discover_git_repositories
+    except ImportError:
+        print(f"ERR|import_discovery|{exc}")
+        sys.exit(1)
 
 has_cache = False
 try:
-    from mr_manager.cache import load_cached_repositories, save_cached_repositories
+    from mr_manager.core.cache import load_cached_repositories, save_cached_repositories
     has_cache = True
 except ImportError:
-    pass
+    try:
+        from mr_manager.cache import load_cached_repositories, save_cached_repositories
+        has_cache = True
+    except ImportError:
+        pass
 
 if not is_cold and not has_cache:
     print("SKIP|no_cache_module")

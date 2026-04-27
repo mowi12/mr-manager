@@ -12,10 +12,9 @@ from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Footer, Header, Label, LoadingIndicator, OptionList, Static
 
+from mr_manager.ui.action_modal import ActionModal
 from mr_manager.ui.selection.controller import RepositorySelectionController
 from mr_manager.ui.selection.model import RepositorySelectionModel
-from mr_manager.ui.save_success_modal import SaveSuccessModal
-from mr_manager.ui.unsaved_changes_modal import UnsavedChangesModal
 
 _TOGGLED_BULLET_COLOR = "#fca311"
 
@@ -240,8 +239,8 @@ class MrManagerApp(App[None]):
         self._update_scan_state_result()
         return True
 
-    def _handle_save_success_modal_quit(self, should_quit: bool | None) -> None:
-        """Process the save-success dialog decision."""
+    def _handle_action_modal_result(self, should_quit: bool | None) -> None:
+        """Process action modal result and keep focus when continuing."""
         if should_quit:
             self.exit()
             return
@@ -261,7 +260,16 @@ class MrManagerApp(App[None]):
             )
         else:
             message = "No Changes To Save."
-        self.push_screen(SaveSuccessModal(message), self._handle_save_success_modal_quit)
+        self.push_screen(
+            ActionModal(
+                message=message,
+                cancel_label="Continue",
+                confirm_label="Quit",
+                cancel_variant="primary",
+                focus_target="cancel",
+            ),
+            self._handle_action_modal_result,
+        )
 
     def action_refresh_scan(self) -> None:
         """Force a fresh filesystem scan and bypass the cache."""
@@ -281,17 +289,19 @@ class MrManagerApp(App[None]):
         )
         self.load_repository_data(force_scan=True)
 
-    def _handle_unsaved_changes_modal_quit(self, should_quit: bool | None) -> None:
-        """Process the unsaved-changes quit dialog decision."""
-        if should_quit:
-            self.exit()
-            return
-        if self._model.displayed_repos and not self._model.loading:
-            self.query_one("#repo-list", OptionList).focus()
-
     def action_quit_without_saving(self) -> None:
         """Exit immediately or ask for confirmation when unsaved changes exist."""
         if not self._controller.has_unsaved_changes():
             self.exit()
             return
-        self.push_screen(UnsavedChangesModal(), self._handle_unsaved_changes_modal_quit)
+        self.push_screen(
+            ActionModal(
+                message="You Have Unsaved Changes.\nQuit Without Saving?",
+                cancel_label="Go Back",
+                confirm_label="I'm Sure",
+                cancel_variant="primary",
+                confirm_variant="error",
+                focus_target="cancel",
+            ),
+            self._handle_action_modal_result,
+        )

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Introduced a user configuration system with persistent config file support at `~/.config/mr-manager/config.yaml`.
+- Added interactive configuration editor accessible via a `c` keyboard shortcut.
+
+### Changed
+
+- Discovery cache TTL is now user-configurable.
+- Repository discovery root directory can now be customized.
+
 ## [0.0.3] - 2026-04-09
 
 ### Added

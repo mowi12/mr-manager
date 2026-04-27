@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import ceil
 from pathlib import Path
 
 DEFAULT_DISCOVERY_CACHE_TTL_HOURS = 24
 _DEFAULT_DISCOVERY_ROOT = Path.home()
 _USER_CONFIG_PATH = Path.home() / ".config" / "mr-manager" / "config.yaml"
-_SECONDS_PER_HOUR = 3600
 
 
 @dataclass(frozen=True)
@@ -98,22 +96,14 @@ def _validate_discovery_cache_ttl_hours(value: str | None, *, key_name: str) -> 
 
 
 def _resolve_cache_ttl_hours(parsed_values: dict[str, str]) -> int:
-    """Resolve configured cache TTL, supporting legacy seconds key."""
-    ttl_hours_value = parsed_values.get("discovery.cache_ttl_hours")
-    if ttl_hours_value is not None:
-        return _validate_discovery_cache_ttl_hours(
-            ttl_hours_value,
-            key_name="discovery.cache_ttl_hours",
-        )
-
-    ttl_seconds_value = parsed_values.get("discovery.cache_ttl_seconds")
-    if ttl_seconds_value is None:
-        return DEFAULT_DISCOVERY_CACHE_TTL_HOURS
-    ttl_seconds = _validate_discovery_cache_ttl_hours(
-        ttl_seconds_value,
-        key_name="discovery.cache_ttl_seconds",
+    """Resolve configured cache TTL from the hours-based config key."""
+    if "discovery.cache_ttl_seconds" in parsed_values:
+        msg = "Unsupported key discovery.cache_ttl_seconds. Use discovery.cache_ttl_hours."
+        raise ValueError(msg)
+    return _validate_discovery_cache_ttl_hours(
+        parsed_values.get("discovery.cache_ttl_hours"),
+        key_name="discovery.cache_ttl_hours",
     )
-    return ceil(ttl_seconds / _SECONDS_PER_HOUR)
 
 
 def _validate_discovery_root(value: str | None) -> Path:

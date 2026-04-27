@@ -7,6 +7,11 @@ ActionModal {
     background: transparent;
 }
 
+ConfigEditorModal {
+    align: center middle;
+    background: transparent;
+}
+
 #content {
     height: 1fr;
 }
@@ -72,4 +77,40 @@ ActionModal {
 
 #action-modal-actions Button {
     margin: 0 1;
+}
+
+#config-editor-dialog {
+    width: 80;
+    max-width: 95%;
+    height: auto;
+    padding: 1 2;
+    border: round $surface;
+    background: $surface;
+}
+
+#config-editor-title {
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+#config-root-label,
+#config-cache-ttl-label {
+    margin-top: 1;
+}
+
+#config-editor-error {
+    color: $error;
+    margin-top: 1;
+    min-height: 1;
+}
+
+#config-editor-actions {
+    width: 1fr;
+    height: auto;
+    align: right middle;
+    margin-top: 1;
+}
+
+#config-editor-actions Button {
+    margin-left: 1;
 }

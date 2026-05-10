@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Configuration field `discovery.root` reverted back to `discovery.root_path`.
+- Configuration element order restored to original (root_path, cache_ttl_hours).
+- Removed unnecessary quotes from configuration file string values.
+
 ## [1.0.0] - 2026-04-27
 
 ### Added

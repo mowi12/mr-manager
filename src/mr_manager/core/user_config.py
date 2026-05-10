@@ -133,13 +133,8 @@ def load_user_config(config_path: Path | None = None) -> UserConfig:
     parsed_values = _parse_user_config_yaml(resolved_config_path.read_text(encoding="utf-8"))
     return UserConfig(
         discovery_cache_ttl_hours=_resolve_cache_ttl_hours(parsed_values),
-        discovery_root=_validate_discovery_root(parsed_values.get("discovery.root")),
+        discovery_root=_validate_discovery_root(parsed_values.get("discovery.root_path")),
     )
-
-
-def _single_quote_yaml_string(value: str) -> str:
-    """Return a single-quoted YAML scalar string."""
-    return "'" + value.replace("'", "''") + "'"
 
 
 def save_user_config(config: UserConfig, config_path: Path | None = None) -> None:
@@ -160,9 +155,7 @@ def save_user_config(config: UserConfig, config_path: Path | None = None) -> Non
     discovery_root = _validate_discovery_root(str(config.discovery_root))
     resolved_config_path = config_path or get_user_config_path()
     config_text = (
-        "discovery:\n"
-        f"  cache_ttl_hours: {ttl_hours}\n"
-        f"  root: {_single_quote_yaml_string(discovery_root.as_posix())}\n"
+        f"discovery:\n  root_path: {discovery_root.as_posix()}\n  cache_ttl_hours: {ttl_hours}\n"
     )
     resolved_config_path.parent.mkdir(parents=True, exist_ok=True)
     resolved_config_path.write_text(config_text, encoding="utf-8")

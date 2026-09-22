@@ -28,8 +28,23 @@ Before opening a PR, run:
 uv run ruff check --no-fix .
 uv run ruff format --check .
 uv run ty check
+uv run pytest
+uv run pyscn check src/
 markdownlint --config markdownlint.json --ignore-path .markdownlintignore "**/*.md"
 ```
+
+`pyscn` reports a project health score alongside the pass/fail check:
+
+```bash
+uv run pyscn analyze src/
+```
+
+Only `pyscn check` (complexity, dead code, clones) gates CI. The composite
+health score is reported for visibility but does not block a merge — see the
+comments in `.pyscn.toml` for why the coupling thresholds are raised.
+
+UI tests are not yet covered. Textual's `App.run_test()` `Pilot` driver and
+`pytest-textual-snapshot` are the intended route when they are added.
 
 ## Commit message style
 

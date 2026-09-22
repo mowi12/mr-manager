@@ -21,6 +21,36 @@ def _normalize_root(root: Path) -> str:
     return root.expanduser().resolve(strict=False).as_posix()
 
 
+def _read_cache_payload(cache_file: Path) -> dict | None:
+    """Read and decode the cache file, or None when missing or unreadable."""
+    if not cache_file.exists():
+        return None
+    try:
+        payload = json.loads(cache_file.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        # If the file is unreadable or corrupt, ignore the cache
+        return None
+    # A bare list is the pre-versioning format, which carried no discovery root.
+    # It cannot be validated against the requested root, so treat it as a miss.
+    return payload if isinstance(payload, dict) else None
+
+
+def _is_usable_for_root(payload: dict, root: Path) -> bool:
+    """Return whether a payload was written by this version for this root."""
+    return payload.get("version") == _CACHE_SCHEMA_VERSION and payload.get(
+        "root"
+    ) == _normalize_root(root)
+
+
+def _is_expired(payload: dict, cache_file: Path, cache_ttl_hours: int) -> bool:
+    """Return whether cached results have outlived the configured TTL."""
+    # Prefer the recorded timestamp so the TTL survives operations that reset mtime.
+    saved_at = payload.get("saved_at")
+    if not isinstance(saved_at, int | float):
+        saved_at = cache_file.stat().st_mtime
+    return time.time() - saved_at > cache_ttl_hours * 3600
+
+
 def load_cached_repositories(
     root: Path,
     cache_ttl_hours: int = DEFAULT_DISCOVERY_CACHE_TTL_HOURS,
@@ -44,33 +74,15 @@ def load_cached_repositories(
         raise ValueError(msg)
 
     cache_file = _cache_file_path()
-    if not cache_file.exists():
+    payload = _read_cache_payload(cache_file)
+    if payload is None or not _is_usable_for_root(payload, root):
         return None
 
-    try:
-        payload = json.loads(cache_file.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        # If the file is unreadable or corrupt, ignore the cache
-        return None
-
-    # A bare list is the pre-versioning format, which carried no discovery root.
-    # It cannot be validated against the requested root, so treat it as a miss.
-    if not isinstance(payload, dict):
-        return None
-    if payload.get("version") != _CACHE_SCHEMA_VERSION:
-        return None
-    if payload.get("root") != _normalize_root(root):
+    if _is_expired(payload, cache_file, cache_ttl_hours):
         return None
 
     repositories = payload.get("repositories")
     if not isinstance(repositories, list):
-        return None
-
-    # Prefer the recorded timestamp so the TTL survives operations that reset mtime.
-    saved_at = payload.get("saved_at")
-    if not isinstance(saved_at, int | float):
-        saved_at = cache_file.stat().st_mtime
-    if time.time() - saved_at > cache_ttl_hours * 3600:
         return None
 
     # Ensure all cached items are valid paths

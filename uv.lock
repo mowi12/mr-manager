@@ -79,6 +79,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "pyscn" },
     { name = "pytest" },
     { name = "ruff" },
     { name = "ty" },
@@ -89,6 +90,7 @@ requires-dist = [{ name = "textual", specifier = ">=8.1.1" }]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "pyscn", specifier = ">=1.32.1" },
     { name = "pytest", specifier = ">=9.1.1" },
     { name = "ruff", specifier = ">=0.15.7" },
     { name = "ty", specifier = ">=0.0.24" },
@@ -128,6 +130,17 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/c3/b2/bc9c9196916376152d655522fdcebac55e66de6603a76a02bca1b6414f6c/pygments-2.20.0.tar.gz", hash = "sha256:6757cd03768053ff99f3039c1a36d6c0aa0b263438fcab17520b30a303a82b5f", size = 4955991, upload-time = "2026-03-29T13:29:33.898Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f4/7e/a72dd26f3b0f4f2bf1dd8923c85f7ceb43172af56d63c7383eb62b332364/pygments-2.20.0-py3-none-any.whl", hash = "sha256:81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176", size = 1231151, upload-time = "2026-03-29T13:29:30.038Z" },
+]
+
+[[package]]
+name = "pyscn"
+version = "1.32.1"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d2/f6/af6d115f05e4f75e3227e046bcbdd876f0c911b67203afa4dc6ddc0c8e1e/pyscn-1.32.1-py3-none-macosx_11_0_arm64.whl", hash = "sha256:dc922aaba7da63e3ea931e26152bbd3a0c3f4f8330921f969c863dab2822bca8", size = 10273961, upload-time = "2026-09-20T11:14:13.742Z" },
+    { url = "https://files.pythonhosted.org/packages/ec/3d/b86b32c3bce452ffe8a3348f0c5531672e157ee604c6cd11c4fa1bd8a939/pyscn-1.32.1-py3-none-manylinux_2_34_aarch64.whl", hash = "sha256:9e4e1c214ecf9b05c5438fa259466a663dd1e6d81f1d79a3796f5518ee52edee", size = 10089420, upload-time = "2026-09-20T11:14:15.772Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/6e/6a9a2c7573690404a26945b1309fd6242d1886b8d4da18e8f58ec4925552/pyscn-1.32.1-py3-none-manylinux_2_34_x86_64.whl", hash = "sha256:9bbbb6760c844e054a2891af11803d89e965e91f06d45a59dc3d7103f83852bd", size = 11213367, upload-time = "2026-09-20T11:14:17.599Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/8b/1ba8a72ce2ba223d02e1e425b12e801d3f35fd70a8629b813256d10e1585/pyscn-1.32.1-py3-none-win_amd64.whl", hash = "sha256:0c776ac90e2fa706cee5dcde279fcd5128088cdb09abd21f45483a538d3b434a", size = 11685481, upload-time = "2026-09-20T11:14:19.381Z" },
 ]
 
 [[package]]

@@ -62,6 +62,26 @@ jobs:
       - name: Run Pytest
         run: uv run pytest
 
+  analyze-python:
+    name: Analyze Python Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set Up Python Tooling
+        uses: ./.github/workflows/setup
+
+      - name: Run pyscn Quality Checks
+        run: uv run pyscn check src/
+
+      - name: Report pyscn Health Score
+        continue-on-error: true
+        run: uv run pyscn analyze src/ | tee -a "$GITHUB_STEP_SUMMARY"
+
   lint-markdown:
     name: Lint Markdown
     runs-on: ubuntu-latest

@@ -1,0 +1,37 @@
+# pyscn configuration — https://github.com/ludo-technologies/pyscn
+#
+# Only settings that deviate from pyscn's defaults are listed here; everything
+# else is deliberately left at the default so upstream tuning carries over.
+
+[analysis]
+include_patterns = ["**/*.py"]
+exclude_patterns = [
+    "**/__pycache__/*",
+    "**/*.pyc",
+    "**/.pytest_cache/",
+    ".venv/",
+    # Test code legitimately repeats setup and has low cohesion; gating it
+    # produces noise rather than signal.
+    "tests/**",
+    # Standalone PEP 723 script with its own dependencies, excluded from type
+    # checking too (see [tool.ty.src] in pyproject.toml).
+    "scripts/**",
+]
+
+[cbo]
+# Raised from the 3/7 default.
+#
+# CBO counts every distinct class a class depends on, with no allowance for
+# framework types. A Textual screen's `compose()` necessarily references a
+# dozen widgets — MrManagerApp scores 14, of which 11 are Textual/Rich
+# (App, Header, Footer, Label, Static, Vertical, Horizontal, OptionList,
+# LoadingIndicator, Binding, Text) and only 3 are ours. At the default
+# threshold this metric is permanently red for writing idiomatic Textual, and
+# the only way to lower it is to wrap framework widgets in indirection that
+# makes the UI harder to read without decoupling anything.
+#
+# These thresholds keep the metric meaningful for our own classes — the core
+# package sits at CBO 0-2 and would still trip a regression — while not
+# penalising framework-shaped UI code.
+low_threshold = 8
+medium_threshold = 16

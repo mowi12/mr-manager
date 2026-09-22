@@ -30,13 +30,18 @@ class RepositorySelectionController:
 
         sections_by_path = parse_configured_repo_sections(self.model.config_path)
 
+        # Read the root once so the cache lookup and the scan cannot disagree.
+        discovery_root = self.model.discover_root
+
         discovered = None
         if not force_scan:
-            discovered = load_cached_repositories(self.model.discovery_cache_ttl_hours)
+            discovered = load_cached_repositories(
+                discovery_root, self.model.discovery_cache_ttl_hours
+            )
 
         if discovered is None:
-            discovered = discover_git_repositories(self.model.discover_root)
-            save_cached_repositories(discovered)
+            discovered = discover_git_repositories(discovery_root)
+            save_cached_repositories(discovered, discovery_root)
 
         return discovered, sections_by_path, config_warning
 

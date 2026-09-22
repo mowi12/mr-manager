@@ -66,14 +66,14 @@ t0 = time.perf_counter()
 repositories = []
 
 if not is_cold and has_cache:
-    repositories = load_cached_repositories()
+    repositories = load_cached_repositories(scan_root)
     if not repositories:
         repositories = discover_git_repositories(scan_root)
-        save_cached_repositories(repositories)
+        save_cached_repositories(repositories, scan_root)
 else:
     repositories = discover_git_repositories(scan_root)
     if has_cache:
-        save_cached_repositories(repositories)
+        save_cached_repositories(repositories, scan_root)
 
 duration = time.perf_counter() - t0
 print(f"OK|{duration}|{len(repositories)}")

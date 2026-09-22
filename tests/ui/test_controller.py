@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from mr_manager.core.user_config import UserConfig
 from mr_manager.ui.selection.controller import RepositorySelectionController
 from mr_manager.ui.selection.model import RepositorySelectionModel
 
@@ -144,3 +145,94 @@ class TestSaveChanges:
         instance.refresh_config_state_after_save()
 
         assert instance.has_unsaved_changes() is False
+
+
+class TestLoadRepositoryData:
+    """Cache and scan coordination in `load_repository_data`."""
+
+    @pytest.fixture
+    def instance(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+        """Return a controller with a pinned user config and no config file."""
+        controller = RepositorySelectionController(RepositorySelectionModel())
+        controller.model.config_path = tmp_path / ".mrconfig"
+        monkeypatch.setattr(
+            "mr_manager.ui.selection.controller.load_user_config",
+            lambda: UserConfig(discovery_cache_ttl_hours=24, discovery_root=tmp_path / "root"),
+        )
+        return controller
+
+    def test_cache_lookup_is_scoped_to_the_discovery_root(
+        self, instance, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen: dict[str, Path] = {}
+        monkeypatch.setattr(
+            "mr_manager.ui.selection.controller.load_cached_repositories",
+            lambda root, _ttl: seen.setdefault("root", root) and None,
+        )
+        monkeypatch.setattr(
+            "mr_manager.ui.selection.controller.discover_git_repositories", lambda _root: []
+        )
+        monkeypatch.setattr(
+            "mr_manager.ui.selection.controller.save_cached_repositories",
+            lambda *_args: None,
+        )
+
+        instance.load_repository_data()
+
+        assert seen["root"] == tmp_path / "root"
+
+    def test_scan_results_are_cached_under_the_same_root(
+        self, instance, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        saved: dict[str, Path] = {}
+        monkeypatch.setattr(
+            "mr_manager.ui.selection.controller.load_cached_repositories",
+            lambda _root, _ttl: None,
+        )
+        monkeypatch.setattr(
+            "mr_manager.ui.selection.controller.discover_git_repositories",
+            lambda root: [root / "alpha"],
+        )
+        monkeypatch.setattr(
+            "mr_manager.ui.selection.controller.save_cached_repositories",
+            lambda _repos, root: saved.setdefault("root", root),
+        )
+
+        discovered, _sections, warning = instance.load_repository_data()
+
+        assert saved["root"] == tmp_path / "root"
+        assert discovered == [tmp_path / "root" / "alpha"]
+        assert warning is None
+
+    def test_forced_scan_bypasses_the_cache(
+        self, instance, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def _fail(*_args: object) -> None:
+            raise AssertionError("cache must not be consulted during a forced scan")
+
+        monkeypatch.setattr("mr_manager.ui.selection.controller.load_cached_repositories", _fail)
+        monkeypatch.setattr(
+            "mr_manager.ui.selection.controller.discover_git_repositories", lambda _root: []
+        )
+        monkeypatch.setattr(
+            "mr_manager.ui.selection.controller.save_cached_repositories", lambda *_a: None
+        )
+
+        instance.load_repository_data(force_scan=True)
+
+    def test_failed_user_config_load_is_reported_as_a_warning(
+        self, instance, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        def _raise() -> None:
+            raise OSError("permission denied")
+
+        monkeypatch.setattr("mr_manager.ui.selection.controller.load_user_config", _raise)
+        monkeypatch.setattr(
+            "mr_manager.ui.selection.controller.load_cached_repositories",
+            lambda _root, _ttl: [],
+        )
+
+        _discovered, _sections, warning = instance.load_repository_data()
+
+        assert warning is not None
+        assert "permission denied" in warning

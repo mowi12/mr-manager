@@ -46,11 +46,13 @@ def discover_git_repositories(root: Path) -> list[Path]:
         root: Filesystem directory used as scan root.
 
     Returns:
-        Sorted absolute repository paths where a `.git` directory exists.
+        Sorted absolute repository paths where a `.git` directory or file exists.
     """
     discovered: list[Path] = []
-    for current_root, dirs, _ in os.walk(root, topdown=True):
-        if ".git" in dirs:
+    for current_root, dirs, files in os.walk(root, topdown=True):
+        # Worktrees and submodules mark their checkout with a `.git` file
+        # containing a `gitdir:` pointer rather than a `.git` directory.
+        if ".git" in dirs or ".git" in files:
             discovered.append(Path(current_root).resolve())
             # Repo detected: skip descending into its working tree for speed.
             dirs.clear()

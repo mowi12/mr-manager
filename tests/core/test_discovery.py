@@ -48,6 +48,26 @@ class TestDiscovery:
             "Gamma",
         ]
 
+    def test_repository_marked_by_a_git_file_is_found(self, tmp_path: Path, make_git_repo) -> None:
+        # Worktrees and submodules use a `.git` file, not a directory.
+        worktree = make_git_repo(tmp_path / "worktree", as_file=True)
+
+        assert discover_git_repositories(tmp_path) == [worktree]
+
+    def test_git_file_and_git_directory_repos_are_found_together(
+        self, tmp_path: Path, make_git_repo
+    ) -> None:
+        main = make_git_repo(tmp_path / "main")
+        worktree = make_git_repo(tmp_path / "worktree", as_file=True)
+
+        assert discover_git_repositories(tmp_path) == [main, worktree]
+
+    def test_git_file_repository_is_not_descended_into(self, tmp_path: Path, make_git_repo) -> None:
+        worktree = make_git_repo(tmp_path / "worktree", as_file=True)
+        make_git_repo(worktree / "vendor" / "inner")
+
+        assert discover_git_repositories(tmp_path) == [worktree]
+
     def test_symlink_loop_terminates(self, tmp_path: Path, make_git_repo) -> None:
         repo = make_git_repo(tmp_path / "repo")
         (tmp_path / "loop").symlink_to(tmp_path, target_is_directory=True)

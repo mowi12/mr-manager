@@ -40,11 +40,15 @@ def load_cached_repositories(
 
     try:
         data = json.loads(_CACHE_FILE.read_text(encoding="utf-8"))
-        # Ensure all cached items are valid paths
-        return [Path(p) for p in data if isinstance(p, str)]
     except (OSError, json.JSONDecodeError):
         # If the file is unreadable or corrupt, ignore the cache
         return None
+
+    if not isinstance(data, list):
+        # Valid JSON of the wrong shape is as unusable as corrupt JSON
+        return None
+    # Ensure all cached items are valid paths
+    return [Path(p) for p in data if isinstance(p, str)]
 
 
 def save_cached_repositories(repositories: list[Path]) -> None:

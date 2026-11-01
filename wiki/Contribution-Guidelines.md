@@ -29,7 +29,19 @@ uv run ruff check --no-fix .
 uv run ruff format --check .
 uv run ty check
 uv run pytest
+uv run --group analysis pyscn check src/
 markdownlint --config markdownlint.json --ignore-path .markdownlintignore "**/*.md"
+```
+
+`pyscn` lives in its own `analysis` dependency group because it only ships wheels for some platforms (macOS arm64,
+Linux glibc 2.34+, Windows amd64), so `uv sync --dev` works everywhere. `uv run --group analysis` installs it on demand.
+
+Only `pyscn check` (complexity, dead code, clones) gates CI. The composite health score is reported in the CI job
+summary for visibility but does not block a merge; see the comments in `.pyscn.toml` for why the coupling thresholds
+are raised. To see the score locally:
+
+```bash
+uv run --group analysis pyscn analyze src/
 ```
 
 ## Tests

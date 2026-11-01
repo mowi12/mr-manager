@@ -22,6 +22,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 RUNNER_CODE = """
+import inspect
 import shutil
 import sys
 import time
@@ -62,18 +63,35 @@ if not is_cold and not has_cache:
     print("SKIP|no_cache_module")
     sys.exit(0)
 
+# Older versions cache a single result set; newer ones key the cache by discovery root.
+cache_takes_root = has_cache and "root" in inspect.signature(load_cached_repositories).parameters
+
+
+def load_cache():
+    if cache_takes_root:
+        return load_cached_repositories(scan_root)
+    return load_cached_repositories()
+
+
+def save_cache(repos):
+    if cache_takes_root:
+        save_cached_repositories(repos, scan_root)
+    else:
+        save_cached_repositories(repos)
+
+
 t0 = time.perf_counter()
 repositories = []
 
 if not is_cold and has_cache:
-    repositories = load_cached_repositories()
+    repositories = load_cache()
     if not repositories:
         repositories = discover_git_repositories(scan_root)
-        save_cached_repositories(repositories)
+        save_cache(repositories)
 else:
     repositories = discover_git_repositories(scan_root)
     if has_cache:
-        save_cached_repositories(repositories)
+        save_cache(repositories)
 
 duration = time.perf_counter() - t0
 print(f"OK|{duration}|{len(repositories)}")

@@ -13,6 +13,9 @@ dependencies = [
 ]
 
 [dependency-groups]
+analysis = [
+    "pyscn>=1.32.1",
+]
 dev = [
     "pytest>=9.1.1",
     "ruff>=0.15.7",

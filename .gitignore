@@ -341,3 +341,6 @@ copilot.data.migration*.xml
 
 ### PyCharm Inspection Profiles ###
 .idea/inspectionProfiles/profiles_settings.xml
+
+### pyscn ###
+.pyscn/

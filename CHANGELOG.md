@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `[default]` sections are listed as repositories again; only the exact `[DEFAULT]` section is skipped, as in `mr`.
 - A discovery cache file containing valid JSON of the wrong shape no longer crashes startup.
 - A read-only cache directory no longer raises an error during discovery.
+- Git worktrees, which mark their checkout with a `.git` file instead of a directory, are now discovered.
+- Changing `discovery.root_path` in the config file no longer shows the previous root's repositories until the cache
+  expires.
 
 ## [1.0.1] - 2026-05-10
 

@@ -6,7 +6,9 @@ import re
 import subprocess
 from pathlib import Path
 
-_SECTION_HEADER_PATTERN = re.compile(r"^\s*\[([^]]+)]\s*$")
+# Mirrors mr: a header starts in the first column. Indented lines continue the previous
+# value, even when they look like `[ ... ]` (for example a shell test in a checkout command).
+_SECTION_HEADER_PATTERN = re.compile(r"^\[([^]]+)]\s*$")
 
 
 def _normalize_repo_reference(config_path: Path, repo_reference: str) -> Path:
@@ -43,11 +45,40 @@ def parse_configured_repo_sections(config_path: Path) -> dict[Path, list[str]]:
         if not match:
             continue
         section_name = match.group(1).strip()
-        if section_name.upper() == "DEFAULT":
+        if section_name == "DEFAULT":
             continue
         normalized_path = _normalize_repo_reference(config_path, section_name)
         configured.setdefault(normalized_path, []).append(section_name)
     return configured
+
+
+def _is_comment(line: str) -> bool:
+    """Return whether a config line is a `#` comment."""
+    return line.strip().startswith("#")
+
+
+def _section_end(lines: list[str], start: int, next_start: int) -> int:
+    """Return where a section's removable block ends, given a following header.
+
+    A comment block counts as a note about the next section, and is kept, only when
+    it sits directly above the next header and a blank line separates it from this
+    section's body. Any other comment, such as a commented-out option at the end of
+    the body, belongs to this section and is removed with it.
+
+    Args:
+        lines: Config file lines.
+        start: Index of the section header.
+        next_start: Index of the next section header.
+
+    Returns:
+        Exclusive end index of the lines to remove.
+    """
+    block_start = next_start
+    while block_start > start + 1 and _is_comment(lines[block_start - 1]):
+        block_start -= 1
+    if block_start < next_start and not lines[block_start - 1].strip():
+        return block_start
+    return next_start
 
 
 def _remove_sections_by_name(lines: list[str], section_names_to_remove: set[str]) -> list[str]:
@@ -66,12 +97,15 @@ def _remove_sections_by_name(lines: list[str], section_names_to_remove: set[str]
     section_ranges: list[tuple[str, int, int]] = []
     section_starts: list[tuple[str, int]] = []
     for index, line in enumerate(lines):
-        match = _SECTION_HEADER_PATTERN.match(line.strip())
+        match = _SECTION_HEADER_PATTERN.match(line)
         if match:
             section_starts.append((match.group(1).strip(), index))
 
     for index, (section_name, start) in enumerate(section_starts):
-        end = section_starts[index + 1][1] if index + 1 < len(section_starts) else len(lines)
+        if index + 1 < len(section_starts):
+            end = _section_end(lines, start, section_starts[index + 1][1])
+        else:
+            end = len(lines)
         section_ranges.append((section_name, start, end))
 
     updated_lines = lines.copy()

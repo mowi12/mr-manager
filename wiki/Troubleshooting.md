@@ -20,9 +20,12 @@
 
 - Ensure `~/.mrconfig` is readable/writable.
 - Check for malformed section headers in the config.
+- Section headers must start in the first column, as in `mr`. Indented lines are continuations of the previous value,
+  so an indented `[name]` is not a repository section.
+- Only the exact `[DEFAULT]` section is reserved. `[default]` is an ordinary repository section.
 - Re-run and inspect status text in the top-right area of the UI.
 
-## Type or lint errors locally
+## Test, type or lint errors locally
 
 Run the full local checks:
 
@@ -30,5 +33,6 @@ Run the full local checks:
 uv run ruff check --no-fix .
 uv run ruff format --check .
 uv run ty check
+uv run pytest
 markdownlint --config markdownlint.json --ignore-path .markdownlintignore "**/*.md"
 ```

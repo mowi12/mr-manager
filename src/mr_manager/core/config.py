@@ -45,7 +45,7 @@ def parse_configured_repo_sections(config_path: Path) -> dict[Path, list[str]]:
         if not match:
             continue
         section_name = match.group(1).strip()
-        if section_name.upper() == "DEFAULT":
+        if section_name == "DEFAULT":
             continue
         normalized_path = _normalize_repo_reference(config_path, section_name)
         configured.setdefault(normalized_path, []).append(section_name)

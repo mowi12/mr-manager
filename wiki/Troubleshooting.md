@@ -4,11 +4,15 @@
 
 - `mr-manager` caches discovered repositories for 24 hours to launch instantly.
 - If you just cloned a new repository, press `r` in the app to force a fresh scan.
+- The cache belongs to the discovery root it was scanned from, so changing `discovery.root_path` always triggers a
+  fresh scan.
 
 ## No repositories discovered
 
 - Verify repositories exist under your home directory.
-- Ensure each repository has a `.git` directory.
+- Ensure each repository has a `.git` directory, or a `.git` file as Git worktrees do.
+- Repositories nested inside another repository, such as submodules, are not listed. Discovery stops at the outer
+  repository.
 - Confirm terminal permissions allow directory traversal.
 
 ## Save reports no changes

@@ -48,11 +48,16 @@ def isolated_environment(
 
 
 @pytest.fixture
-def make_git_repo() -> Callable[[Path], Path]:
+def make_git_repo() -> Callable[..., Path]:
     """Return a factory creating a directory that looks like a Git checkout."""
 
-    def _make(path: Path) -> Path:
-        (path / ".git").mkdir(parents=True, exist_ok=True)
+    def _make(path: Path, *, as_file: bool = False) -> Path:
+        path.mkdir(parents=True, exist_ok=True)
+        if as_file:
+            # Worktrees and submodules use a `.git` file pointing at the real gitdir.
+            (path / ".git").write_text("gitdir: /elsewhere/.git/worktrees/x\n", encoding="utf-8")
+        else:
+            (path / ".git").mkdir(exist_ok=True)
         return path
 
     return _make

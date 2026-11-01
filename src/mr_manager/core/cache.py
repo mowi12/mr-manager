@@ -53,6 +53,20 @@ def load_cached_repositories(
         # If the file is unreadable or corrupt, ignore the cache
         return None
 
+    return _repositories_from_payload(data, root)
+
+
+def _repositories_from_payload(data: object, root: Path) -> list[Path] | None:
+    """Extract cached repositories from a decoded cache payload.
+
+    Args:
+        data: Decoded JSON content of the cache file.
+        root: Discovery root the cached results must belong to.
+
+    Returns:
+        Repository paths, or None when the payload is not a current-format cache entry
+        written for this root.
+    """
     # Anything but the current envelope is unusable, including valid JSON of the wrong
     # shape and the earlier bare-list format, which did not record the discovery root.
     if not isinstance(data, dict) or data.get("version") != _CACHE_SCHEMA_VERSION:

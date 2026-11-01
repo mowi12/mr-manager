@@ -46,6 +46,22 @@ jobs:
       - name: Run ty Type Checks
         run: uv run ty check
 
+  test-python:
+    name: Test Python
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set Up Python Tooling
+        uses: ./.github/workflows/setup
+
+      - name: Run Pytest
+        run: uv run pytest
+
   lint-markdown:
     name: Lint Markdown
     runs-on: ubuntu-latest

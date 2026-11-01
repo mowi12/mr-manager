@@ -6,7 +6,9 @@ import re
 import subprocess
 from pathlib import Path
 
-_SECTION_HEADER_PATTERN = re.compile(r"^\s*\[([^]]+)]\s*$")
+# Mirrors mr: a header starts in the first column. Indented lines continue the previous
+# value, even when they look like `[ ... ]` (for example a shell test in a checkout command).
+_SECTION_HEADER_PATTERN = re.compile(r"^\[([^]]+)]\s*$")
 
 
 def _normalize_repo_reference(config_path: Path, repo_reference: str) -> Path:
@@ -66,7 +68,7 @@ def _remove_sections_by_name(lines: list[str], section_names_to_remove: set[str]
     section_ranges: list[tuple[str, int, int]] = []
     section_starts: list[tuple[str, int]] = []
     for index, line in enumerate(lines):
-        match = _SECTION_HEADER_PATTERN.match(line.strip())
+        match = _SECTION_HEADER_PATTERN.match(line)
         if match:
             section_starts.append((match.group(1).strip(), index))
 

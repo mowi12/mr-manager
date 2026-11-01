@@ -187,11 +187,12 @@ class MrManagerApp(App[None]):
 
     def _apply_scan_state_layout(self) -> None:
         """Switch scan status between one-row and stacked layouts when needed."""
-        if not self.is_mounted:
+        scan_rows = self.query("#scan-status-row").results(Horizontal)
+        scan_row = next(scan_rows, None)
+        if scan_row is None or not scan_row.is_mounted:
             return
 
         status_label = self.query_one("#scan-state-result", Label)
-        scan_row = self.query_one("#scan-status-row", Horizontal)
         scan_state = self.query_one("#scan-state", Horizontal)
         indicator = self.query_one("#scan-state-indicator", LoadingIndicator)
         full_text = self._model.scan_state_text

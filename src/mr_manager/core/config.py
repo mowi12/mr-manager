@@ -52,6 +52,35 @@ def parse_configured_repo_sections(config_path: Path) -> dict[Path, list[str]]:
     return configured
 
 
+def _is_comment(line: str) -> bool:
+    """Return whether a config line is a `#` comment."""
+    return line.strip().startswith("#")
+
+
+def _section_end(lines: list[str], start: int, next_start: int) -> int:
+    """Return where a section's removable block ends, given a following header.
+
+    A comment block counts as a note about the next section, and is kept, only when
+    it sits directly above the next header and a blank line separates it from this
+    section's body. Any other comment, such as a commented-out option at the end of
+    the body, belongs to this section and is removed with it.
+
+    Args:
+        lines: Config file lines.
+        start: Index of the section header.
+        next_start: Index of the next section header.
+
+    Returns:
+        Exclusive end index of the lines to remove.
+    """
+    block_start = next_start
+    while block_start > start + 1 and _is_comment(lines[block_start - 1]):
+        block_start -= 1
+    if block_start < next_start and not lines[block_start - 1].strip():
+        return block_start
+    return next_start
+
+
 def _remove_sections_by_name(lines: list[str], section_names_to_remove: set[str]) -> list[str]:
     """Remove named section blocks from config text lines.
 
@@ -73,7 +102,10 @@ def _remove_sections_by_name(lines: list[str], section_names_to_remove: set[str]
             section_starts.append((match.group(1).strip(), index))
 
     for index, (section_name, start) in enumerate(section_starts):
-        end = section_starts[index + 1][1] if index + 1 < len(section_starts) else len(lines)
+        if index + 1 < len(section_starts):
+            end = _section_end(lines, start, section_starts[index + 1][1])
+        else:
+            end = len(lines)
         section_ranges.append((section_name, start, end))
 
     updated_lines = lines.copy()

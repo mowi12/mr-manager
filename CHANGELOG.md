@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Indented lines in `.mrconfig` are no longer mistaken for section headers. An indented continuation line such as
+  `[ -d x ] || ...` previously split its section, and removing that section left orphaned lines behind.
+- Removing a repository no longer deletes the comment block written directly above the next section.
+- `[default]` sections are listed as repositories again; only the exact `[DEFAULT]` section is skipped, as in `mr`.
+- A discovery cache file containing valid JSON of the wrong shape no longer crashes startup.
+- A read-only cache directory no longer raises an error during discovery.
+
 ## [1.0.1] - 2026-05-10
 
 ### Fixed

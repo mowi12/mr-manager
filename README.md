@@ -88,6 +88,7 @@ Run checks locally before opening a PR:
 uv run ruff check --no-fix .
 uv run ruff format --check .
 uv run ty check
+uv run pytest
 markdownlint --config markdownlint.json --ignore-path .markdownlintignore "**/*.md"
 ```
 

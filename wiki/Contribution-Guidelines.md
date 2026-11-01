@@ -28,8 +28,25 @@ Before opening a PR, run:
 uv run ruff check --no-fix .
 uv run ruff format --check .
 uv run ty check
+uv run pytest
 markdownlint --config markdownlint.json --ignore-path .markdownlintignore "**/*.md"
 ```
+
+## Tests
+
+Tests live in `tests/`, mirroring the package layout (`tests/core`, `tests/ui`, `tests/cli`). Run them with:
+
+```bash
+uv run pytest
+```
+
+Every test runs in an isolated environment: `HOME` points to a temporary directory and Git ignores global and system
+config, so the suite never reads or writes your real `~/.mrconfig`, discovery cache or user config. Use `tmp_path` for
+any files a test needs, and the `make_git_repo` / `make_real_git_repo` fixtures from `tests/conftest.py` for
+repositories.
+
+When fixing a bug, add a test that reproduces it first. Changes to `.mrconfig` handling should match how `mr` itself
+parses the file.
 
 ## Commit message style
 

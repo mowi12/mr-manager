@@ -57,8 +57,8 @@ def save_cached_repositories(repositories: list[Path]) -> None:
     Args:
         repositories: List of absolute repository paths to cache.
     """
-    _CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
     try:
+        _CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
         data = [str(repo) for repo in repositories]
         _CACHE_FILE.write_text(json.dumps(data), encoding="utf-8")
     except OSError:

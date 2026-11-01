@@ -203,28 +203,19 @@ class MrManagerApp(App[None]):
 
         indicator_width = indicator.size.width if indicator.display else 0
         full_required_width = cell_len(full_text) + indicator_width
-        compact_required_width = cell_len(compact_text) + indicator_width
         one_row_status_width = (
             scan_state.size.width if not scan_row.has_class("stacked") else max(1, row_width // 2)
         )
-        stacked_status_width = row_width
 
         if full_required_width <= one_row_status_width:
             scan_row.remove_class("stacked")
             status_label.update(full_text)
             return
 
-        if full_required_width <= stacked_status_width:
-            scan_row.add_class("stacked")
-            status_label.update(full_text)
-            return
-
+        # Stacked, the status gets the full row; fall back to the compact text when even
+        # that is too narrow for the full text.
         scan_row.add_class("stacked")
-        if compact_required_width <= stacked_status_width:
-            status_label.update(compact_text)
-            return
-
-        status_label.update(compact_text)
+        status_label.update(full_text if full_required_width <= row_width else compact_text)
 
     def action_cursor_down(self) -> None:
         """Move list selection one row down."""

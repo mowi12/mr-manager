@@ -62,6 +62,33 @@ jobs:
       - name: Run Pytest
         run: uv run pytest
 
+  analyze-python:
+    name: Analyze Python Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set Up Python Tooling
+        uses: ./.github/workflows/setup
+
+      - name: Run pyscn Quality Checks
+        run: uv run --group analysis pyscn check src/
+
+      # Informational only: the health score is not a merge gate (see .pyscn.toml).
+      # pyscn prints its human-readable report to stderr, so the JSON report is
+      # rendered into the job summary instead.
+      - name: Report pyscn Health Score
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          uv run --group analysis pyscn analyze --json --output - --no-open src/ \
+            | jq -r '.summary | "### pyscn health score: \(.health_score)/100 (\(.grade))\n\n| Category | Score |\n| --- | --- |\n| Complexity | \(.complexity_score) |\n| Dead code | \(.dead_code_score) |\n| Duplication | \(.duplication_score) |\n| Coupling (CBO) | \(.coupling_score) |\n| Cohesion (LCOM) | \(.cohesion_score) |\n| Dependencies | \(.dependency_score) |\n| Architecture | \(.architecture_score) |"' \
+            >> "$GITHUB_STEP_SUMMARY"
+
   lint-markdown:
     name: Lint Markdown
     runs-on: ubuntu-latest

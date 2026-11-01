@@ -89,6 +89,7 @@ uv run ruff check --no-fix .
 uv run ruff format --check .
 uv run ty check
 uv run pytest
+uv run --group analysis pyscn check src/
 markdownlint --config markdownlint.json --ignore-path .markdownlintignore "**/*.md"
 ```
 

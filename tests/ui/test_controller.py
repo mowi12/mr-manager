@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from mr_manager.core.user_config import UserConfig, save_user_config
 from mr_manager.ui.selection.controller import RepositorySelectionController
 from mr_manager.ui.selection.model import RepositorySelectionModel
 
@@ -147,3 +148,23 @@ class TestSaveChanges:
         instance.refresh_config_state_after_save()
 
         assert instance.has_unsaved_changes() is False
+
+
+class TestLoadRepositoryData:
+    """Loading repositories through the real cache and discovery."""
+
+    def test_changed_discovery_root_is_not_served_from_the_previous_cache(
+        self, tmp_path: Path, make_git_repo: Callable[..., Path]
+    ) -> None:
+        first_root, second_root = tmp_path / "first", tmp_path / "second"
+        make_git_repo(first_root / "alpha")
+        beta = make_git_repo(second_root / "beta")
+        controller = RepositorySelectionController(RepositorySelectionModel())
+        save_user_config(UserConfig(discovery_cache_ttl_hours=24, discovery_root=first_root))
+        controller.load_repository_data()
+
+        # The root changes outside the app, e.g. by editing config.yaml, within the TTL.
+        save_user_config(UserConfig(discovery_cache_ttl_hours=24, discovery_root=second_root))
+        discovered, _sections, _warning = controller.load_repository_data()
+
+        assert discovered == [beta]
